@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { CalendarX, FileDown, ListChecks, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useCounselingSlots } from "@/lib/hooks/useCounselingSlots";
+import { useActiveClass } from "@/components/providers/ActiveClassProvider";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
@@ -14,7 +15,10 @@ import { formatTime } from "@/lib/time";
 import type { CounselingSlot } from "@/lib/database.types";
 
 export function StatusTab() {
-  const { slots, reload } = useCounselingSlots();
+  const { grade, classNo } = useActiveClass();
+  const { slots, reload } = useCounselingSlots(
+    grade != null && classNo != null ? { grade, classNo } : null,
+  );
   const showToast = useToast();
   const confirm = useConfirm();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);

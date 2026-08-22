@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireTeacher } from "@/lib/supabase/require-teacher";
+import { requireTeacher, canAccessStudent } from "@/lib/supabase/require-teacher";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
@@ -12,12 +12,16 @@ export async function POST(request: Request) {
   if (typeof studentId !== "string" || !studentId.trim()) {
     return NextResponse.json({ error: "학번이 필요합니다." }, { status: 400 });
   }
+  const trimmedId = studentId.trim();
+  if (!canAccessStudent(teacher, trimmedId)) {
+    return NextResponse.json({ error: "본인 담당 반 학생만 관리할 수 있습니다." }, { status: 403 });
+  }
 
   const admin = createAdminClient();
   const { data: profile } = await admin
     .from("profiles")
     .select("id")
-    .eq("student_id", studentId.trim())
+    .eq("student_id", trimmedId)
     .maybeSingle();
 
   if (!profile) {

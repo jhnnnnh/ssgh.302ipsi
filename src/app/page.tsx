@@ -19,6 +19,7 @@ export default function HomePage() {
   const [submitting, setSubmitting] = useState(false);
 
   const [teacherModalOpen, setTeacherModalOpen] = useState(false);
+  const [teacherName, setTeacherName] = useState("");
   const [teacherPw, setTeacherPw] = useState("");
   const [teacherSubmitting, setTeacherSubmitting] = useState(false);
 
@@ -60,8 +61,8 @@ export default function HomePage() {
   }
 
   async function handleTeacherLogin() {
-    if (!teacherPw) {
-      showToast("비밀번호를 입력해 주세요.", "error");
+    if (!teacherName.trim() || !teacherPw) {
+      showToast("이름과 비밀번호를 입력해 주세요.", "error");
       return;
     }
     setTeacherSubmitting(true);
@@ -69,7 +70,7 @@ export default function HomePage() {
       const res = await fetch("/api/auth/teacher-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: teacherPw }),
+        body: JSON.stringify({ name: teacherName.trim(), password: teacherPw }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -79,6 +80,7 @@ export default function HomePage() {
       const supabase = createClient();
       await supabase.auth.setSession(data.session);
       setTeacherModalOpen(false);
+      setTeacherName("");
       setTeacherPw("");
       router.push("/teacher");
     } catch {
@@ -186,7 +188,7 @@ export default function HomePage() {
       <Modal
         open={teacherModalOpen}
         onClose={() => setTeacherModalOpen(false)}
-        title="선생님 비밀번호 인증"
+        title="선생님 로그인"
         icon={<KeyRound className="w-4 h-4 text-indigo-600" />}
         maxWidth="max-w-sm"
         footer={
@@ -202,23 +204,35 @@ export default function HomePage() {
               disabled={teacherSubmitting}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-60"
             >
-              인증 확인
+              {teacherSubmitting ? "확인 중..." : "로그인"}
             </button>
           </>
         }
       >
-        <div>
-          <label className="block text-xs font-bold text-slate-600 mb-1.5">
-            비밀번호 입력
-          </label>
-          <input
-            type="password"
-            value={teacherPw}
-            onChange={(e) => setTeacherPw(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleTeacherLogin()}
-            placeholder="비밀번호 입력"
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1.5">이름</label>
+            <input
+              value={teacherName}
+              onChange={(e) => setTeacherName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleTeacherLogin()}
+              placeholder="이름 입력"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1.5">
+              비밀번호 입력
+            </label>
+            <input
+              type="password"
+              value={teacherPw}
+              onChange={(e) => setTeacherPw(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleTeacherLogin()}
+              placeholder="비밀번호 입력"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
         </div>
       </Modal>
     </div>

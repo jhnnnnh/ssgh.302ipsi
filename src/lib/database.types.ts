@@ -1,5 +1,7 @@
 export type UserRole = "student" | "teacher";
 
+export type TeacherRole = "homeroom" | "admin";
+
 export type SupportLevel = "상향" | "소신" | "적정" | "하향";
 
 /** 전형 유형: 자유 텍스트 (빠른 선택 버튼 + "직접입력"으로 임의 문자열 허용) */
@@ -20,6 +22,8 @@ export type FavoriteCategory = "weekday" | "weekend";
 export type Roster = {
   student_id: string;
   name: string;
+  grade: number;
+  class_no: number;
   created_at: string;
 };
 
@@ -31,6 +35,9 @@ export type Profile = {
   theme_color: string | null;
   font_family: string | null;
   font_scale: string | null;
+  teacher_role: TeacherRole | null;
+  grade: number | null;
+  class_no: number | null;
   created_at: string;
 };
 
@@ -44,6 +51,8 @@ export type CounselingSlot = {
   student_name: string | null;
   booked_at: string | null;
   memo: string | null;
+  grade: number;
+  class_no: number;
   created_at: string;
 };
 
@@ -52,6 +61,8 @@ export type SlotFavorite = {
   category: FavoriteCategory;
   start_time: string;
   end_time: string;
+  grade: number;
+  class_no: number;
   created_at: string;
 };
 
@@ -112,7 +123,7 @@ export type Database = {
       roster: {
         Row: Roster;
         Insert: Pick<Roster, "student_id" | "name"> & Partial<Pick<Roster, "created_at">>;
-        Update: Partial<Roster>;
+        Update: Partial<Omit<Roster, "grade" | "class_no">>;
       } & NoRelationships;
       profiles: {
         Row: Profile;
@@ -120,14 +131,22 @@ export type Database = {
           Partial<
             Pick<
               Profile,
-              "student_id" | "name" | "theme_color" | "font_family" | "font_scale" | "created_at"
+              | "student_id"
+              | "name"
+              | "theme_color"
+              | "font_family"
+              | "font_scale"
+              | "teacher_role"
+              | "grade"
+              | "class_no"
+              | "created_at"
             >
           >;
         Update: Partial<Profile>;
       } & NoRelationships;
       counseling_slots: {
         Row: CounselingSlot;
-        Insert: Pick<CounselingSlot, "date" | "start_time" | "end_time"> &
+        Insert: Pick<CounselingSlot, "date" | "start_time" | "end_time" | "grade" | "class_no"> &
           Partial<
             Pick<
               CounselingSlot,
@@ -144,7 +163,7 @@ export type Database = {
       } & NoRelationships;
       slot_favorites: {
         Row: SlotFavorite;
-        Insert: Pick<SlotFavorite, "category" | "start_time" | "end_time"> &
+        Insert: Pick<SlotFavorite, "category" | "start_time" | "end_time" | "grade" | "class_no"> &
           Partial<Pick<SlotFavorite, "id" | "created_at">>;
         Update: Partial<SlotFavorite>;
       } & NoRelationships;

@@ -23,3 +23,12 @@ export function createAdminClient() {
 export function studentEmail(studentId: string) {
   return `${studentId.trim()}@stu.internal`;
 }
+
+/**
+ * 교사 계정용 합성 이메일. 이름을 그대로 쓰지 않고 무작위 값으로 발급한다 —
+ * 로그인은 항상 이름으로 profiles를 조회해 id를 찾은 뒤 getUserById로 이메일을
+ * 알아내는 경로를 타므로, 이메일 자체는 사람이 읽을 필요가 없다.
+ */
+export function randomStaffEmail() {
+  return `staff-${crypto.randomUUID()}@staff.internal`;
+}

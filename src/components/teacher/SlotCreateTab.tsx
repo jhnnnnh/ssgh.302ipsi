@@ -7,6 +7,7 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { useFavorites } from "@/lib/hooks/useFavorites";
 import { useCounselingSlots } from "@/lib/hooks/useCounselingSlots";
+import { useActiveClass } from "@/components/providers/ActiveClassProvider";
 import {
   autoFormatTime,
   isValidTime,
@@ -32,8 +33,9 @@ function findOverlap(existing: CounselingSlot[], date: string, start: string, en
 export function SlotCreateTab() {
   const showToast = useToast();
   const confirm = useConfirm();
+  const { grade, classNo } = useActiveClass();
   const { favorites, reload } = useFavorites();
-  const { slots } = useCounselingSlots();
+  const { slots } = useCounselingSlots(grade != null && classNo != null ? { grade, classNo } : null);
 
   const [date, setDate] = useState(todayDateString);
   const [start, setStart] = useState("");
@@ -61,6 +63,10 @@ export function SlotCreateTab() {
   const weekendFavorites = favorites.filter((f) => f.category === "weekend");
 
   async function createNewSlot() {
+    if (grade == null || classNo == null) {
+      showToast("반 정보를 확인할 수 없습니다.", "error");
+      return;
+    }
     if (!date) {
       showToast("상담 날짜를 선택해 주세요.", "error");
       return;
@@ -84,7 +90,7 @@ export function SlotCreateTab() {
     const supabase = createClient();
     const { error } = await supabase
       .from("counseling_slots")
-      .insert({ date, start_time: start, end_time: end });
+      .insert({ date, start_time: start, end_time: end, grade, class_no: classNo });
     if (error) {
       showToast("슬롯 생성에 실패했습니다.", "error");
       return;
@@ -96,14 +102,22 @@ export function SlotCreateTab() {
   }
 
   async function addFavoriteSlot() {
+    if (grade == null || classNo == null) {
+      showToast("반 정보를 확인할 수 없습니다.", "error");
+      return;
+    }
     if (!isValidTime(favStart) || !isValidTime(favEnd)) {
       showToast("즐겨찾기 시간을 HH:MM 형식으로 입력해 주세요.", "error");
       return;
     }
     const supabase = createClient();
-    const { error } = await supabase
-      .from("slot_favorites")
-      .insert({ category: favCategory, start_time: favStart, end_time: favEnd });
+    const { error } = await supabase.from("slot_favorites").insert({
+      category: favCategory,
+      start_time: favStart,
+      end_time: favEnd,
+      grade,
+      class_no: classNo,
+    });
     if (error) {
       showToast("즐겨찾기 추가에 실패했습니다.", "error");
       return;
@@ -121,6 +135,10 @@ export function SlotCreateTab() {
   }
 
   async function addSingleFavorite(f: { start_time: string; end_time: string }) {
+    if (grade == null || classNo == null) {
+      showToast("반 정보를 확인할 수 없습니다.", "error");
+      return;
+    }
     if (!date) {
       showToast("먼저 상담 날짜를 선택해 주세요.", "error");
       return;
@@ -138,7 +156,7 @@ export function SlotCreateTab() {
     const supabase = createClient();
     const { error } = await supabase
       .from("counseling_slots")
-      .insert({ date, start_time, end_time });
+      .insert({ date, start_time, end_time, grade, class_no: classNo });
     if (error) {
       showToast("슬롯 생성에 실패했습니다.", "error");
       return;
@@ -147,6 +165,10 @@ export function SlotCreateTab() {
   }
 
   async function generateAllFavorites(category: FavoriteCategory) {
+    if (grade == null || classNo == null) {
+      showToast("반 정보를 확인할 수 없습니다.", "error");
+      return;
+    }
     if (!date) {
       showToast("먼저 상담 날짜를 선택해 주세요.", "error");
       return;
@@ -187,9 +209,15 @@ export function SlotCreateTab() {
     if (!ok) return;
 
     const supabase = createClient();
-    const { error } = await supabase
-      .from("counseling_slots")
-      .insert(toInsert.map((f) => ({ date, start_time: f.start_time, end_time: f.end_time })));
+    const { error } = await supabase.from("counseling_slots").insert(
+      toInsert.map((f) => ({
+        date,
+        start_time: f.start_time,
+        end_time: f.end_time,
+        grade,
+        class_no: classNo,
+      })),
+    );
     if (error) {
       showToast("일괄 생성에 실패했습니다.", "error");
       return;

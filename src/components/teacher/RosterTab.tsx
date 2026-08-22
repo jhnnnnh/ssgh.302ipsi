@@ -6,11 +6,14 @@ import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { useRoster } from "@/lib/hooks/useRoster";
+import { useActiveClass } from "@/components/providers/ActiveClassProvider";
+import { parseStudentId, formatClassLabel } from "@/lib/student-id";
 
 export function RosterTab() {
   const showToast = useToast();
   const confirm = useConfirm();
   const { roster, passwordSetIds, reload } = useRoster();
+  const { grade, classNo, isAdmin } = useActiveClass();
   const [pasteText, setPasteText] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -36,10 +39,40 @@ export function RosterTab() {
       return;
     }
 
+    const malformed = rows.filter((r) => !parseStudentId(r.student_id));
+    if (malformed.length > 0) {
+      showToast(
+        `학번 형식이 올바르지 않습니다: ${malformed.map((r) => r.student_id).join(", ")}`,
+        "error",
+      );
+      return;
+    }
+
+    if (!isAdmin) {
+      if (grade == null || classNo == null) {
+        showToast("담당 반 정보를 확인할 수 없습니다.", "error");
+        return;
+      }
+      const mismatched = rows.filter((r) => {
+        const parsed = parseStudentId(r.student_id)!;
+        return parsed.grade !== grade || parsed.classNo !== classNo;
+      });
+      if (mismatched.length > 0) {
+        showToast(
+          `본인 담당 반(${formatClassLabel(grade, classNo)}) 학번만 등록할 수 있습니다. (${mismatched
+            .map((r) => r.student_id)
+            .join(", ")})`,
+          "error",
+        );
+        return;
+      }
+    }
+
     const supabase = createClient();
-    const { error } = await supabase.from("roster").upsert(rows, { onConflict: "student_id" });
+    const { error } = await supabase.from("roster").insert(rows);
     if (error) {
-      showToast("명단 등록에 실패했습니다.", "error");
+      const message = error.code === "23505" ? "이미 등록된 학번이 포함되어 있습니다." : "명단 등록에 실패했습니다.";
+      showToast(message, "error");
       return;
     }
     showToast(`${rows.length}명이 등록되었습니다.`, "success");
@@ -92,22 +125,31 @@ export function RosterTab() {
   }
 
   async function handleClearRoster() {
+    if (grade == null || classNo == null) {
+      showToast("반 정보를 확인할 수 없습니다.", "error");
+      return;
+    }
+    const classLabel = formatClassLabel(grade, classNo);
     const first = await confirm({
-      title: "명단 전체 비우기",
-      message: "등록된 모든 학생 명단과 계정이 삭제됩니다. 계속하시겠습니까?",
+      title: "명단 비우기",
+      message: `${classLabel}에 등록된 모든 학생 명단과 계정이 삭제됩니다. 계속하시겠습니까?`,
       confirmLabel: "계속",
       danger: true,
     });
     if (!first) return;
     const second = await confirm({
       title: "최종 확인",
-      message: "정말로 되돌릴 수 없습니다. 명단 전체를 비우시겠습니까?",
+      message: `정말로 되돌릴 수 없습니다. ${classLabel} 명단을 비우시겠습니까?`,
       confirmLabel: "전체 삭제",
       danger: true,
     });
     if (!second) return;
 
-    const res = await fetch("/api/teacher/clear-roster", { method: "POST" });
+    const res = await fetch("/api/teacher/clear-roster", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ grade, classNo }),
+    });
     if (!res.ok) {
       showToast("초기화에 실패했습니다.", "error");
       return;
