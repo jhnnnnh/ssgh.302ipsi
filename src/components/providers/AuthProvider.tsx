@@ -4,6 +4,13 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/database.types";
+import { buildThemeColorVars } from "@/lib/theme-color";
+import {
+  DEFAULT_FONT_KEY,
+  getFontFamilyByKey,
+  getFontScaleByKey,
+  getFontSizeAdjustByKey,
+} from "@/lib/font-options";
 
 interface AuthContextValue {
   session: Session | null;
@@ -66,9 +73,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null);
   };
 
+  // 글씨 크기는 rem의 기준인 <html> 루트 font-size 자체를 바꿔야 반영되므로
+  // (색상/폰트 종류처럼 하위 트리에 CSS 변수를 얹는 방식으로는 rem에 닿지 않는다),
+  // 여기서만 예외적으로 document.documentElement에 직접 배율을 적용한다.
+  // 폰트마다 같은 크기에서도 실제 보이는 크기가 달라서, 사용자가 고른 배율에
+  // 선택한 폰트 고유의 보정 배율(sizeAdjust)까지 곱해 "보이는 크기"를 통일한다.
+  useEffect(() => {
+    const userScale = profile ? getFontScaleByKey(profile.font_scale) : 1;
+    const fontAdjust = profile ? getFontSizeAdjustByKey(profile.font_family) : 1;
+    document.documentElement.style.setProperty("--font-scale", String(userScale * fontAdjust));
+  }, [profile]);
+
+  const themeVars = profile?.theme_color ? buildThemeColorVars(profile.theme_color) : null;
+
+  const isCustomFont = profile?.font_family && profile.font_family !== DEFAULT_FONT_KEY;
+  const fontVars = isCustomFont
+    ? {
+        "--font-sans": getFontFamilyByKey(profile!.font_family),
+        fontFamily: getFontFamilyByKey(profile!.font_family),
+      }
+    : null;
+
   return (
     <AuthContext.Provider value={{ session, profile, loading, refreshProfile, signOut }}>
-      {children}
+      {/* display:contents는 레이아웃에 영향을 주지 않으면서 CSS 변수(+폰트)만 자식들에 전파한다. */}
+      <div style={{ display: "contents", ...themeVars, ...fontVars }}>{children}</div>
     </AuthContext.Provider>
   );
 }

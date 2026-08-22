@@ -47,6 +47,11 @@ export function compareTime(a: string, b: string) {
   return a.localeCompare(b);
 }
 
+/** "HH:MM" 두 구간이 겹치는지 확인한다 (끝 시각과 다음 시작 시각이 같은 건 겹침이 아님). */
+export function timeRangesOverlap(startA: string, endA: string, startB: string, endB: string) {
+  return startA < endB && startB < endA;
+}
+
 /** 로컬 타임존 기준 오늘 날짜를 "YYYY-MM-DD"로 반환한다. */
 export function todayDateString() {
   const d = new Date();

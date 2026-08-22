@@ -84,9 +84,10 @@ export function StatusTab() {
   }
 
   function exportCsv() {
+    const sorted = [...slots].sort((a, b) => (a.date + a.start_time).localeCompare(b.date + b.start_time));
     const rows: (string | number)[][] = [
-      ["날짜", "시작", "종료", "상태", "학번", "이름", "신청일시"],
-      ...daySlots.map((s) => [
+      ["날짜", "시작", "종료", "상태", "학번", "이름", "신청일시", "메모"],
+      ...sorted.map((s) => [
         s.date,
         formatTime(s.start_time),
         formatTime(s.end_time),
@@ -94,9 +95,10 @@ export function StatusTab() {
         s.student_id ?? "",
         s.student_name ?? "",
         s.booked_at ? new Date(s.booked_at).toLocaleString("ko-KR") : "",
+        s.memo ?? "",
       ]),
     ];
-    downloadCsv(`상담현황_${activeDate ?? "전체"}.csv`, rows);
+    downloadCsv(`상담현황_전체기간.csv`, rows);
   }
 
   const allChecked = daySlots.length > 0 && daySlots.every((s) => checked.has(s.id));
@@ -122,7 +124,7 @@ export function StatusTab() {
               className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
             >
               <FileDown className="w-3.5 h-3.5" />
-              <span>CSV 내보내기</span>
+              <span>엑셀 일괄 다운로드</span>
             </button>
           </div>
         </div>

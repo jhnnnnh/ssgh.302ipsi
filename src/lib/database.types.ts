@@ -28,6 +28,9 @@ export type Profile = {
   role: UserRole;
   student_id: string | null;
   name: string | null;
+  theme_color: string | null;
+  font_family: string | null;
+  font_scale: string | null;
   created_at: string;
 };
 
@@ -40,6 +43,7 @@ export type CounselingSlot = {
   student_id: string | null;
   student_name: string | null;
   booked_at: string | null;
+  memo: string | null;
   created_at: string;
 };
 
@@ -70,8 +74,21 @@ export type WonseoCard = {
   has_exam_date: boolean;
   exam_date: string | null;
   memo: string | null;
+  recent_results: RecentResultYear[];
+  sort_order: number;
   created_at: string;
   updated_at: string;
+};
+
+/** 최근 입결 표의 한 연도 열. 모든 값은 대학마다 표기 형식이 달라 자유 텍스트로 둔다. */
+export type RecentResultYear = {
+  year: string;
+  enrollment: string;
+  competitionRate: string;
+  fillCount: string;
+  cut50: string;
+  cut70: string;
+  myPosition: string;
 };
 
 export type WonseoImage = {
@@ -100,7 +117,12 @@ export type Database = {
       profiles: {
         Row: Profile;
         Insert: Pick<Profile, "id" | "role"> &
-          Partial<Pick<Profile, "student_id" | "name" | "created_at">>;
+          Partial<
+            Pick<
+              Profile,
+              "student_id" | "name" | "theme_color" | "font_family" | "font_scale" | "created_at"
+            >
+          >;
         Update: Partial<Profile>;
       } & NoRelationships;
       counseling_slots: {
@@ -109,7 +131,13 @@ export type Database = {
           Partial<
             Pick<
               CounselingSlot,
-              "id" | "is_booked" | "student_id" | "student_name" | "booked_at" | "created_at"
+              | "id"
+              | "is_booked"
+              | "student_id"
+              | "student_name"
+              | "booked_at"
+              | "memo"
+              | "created_at"
             >
           >;
         Update: Partial<CounselingSlot>;

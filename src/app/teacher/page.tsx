@@ -12,6 +12,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { AppearanceSettingsButtons } from "@/components/settings/AppearanceSettingsButtons";
 import { Tabs } from "@/components/ui/Tabs";
 import { SlotCreateTab } from "@/components/teacher/SlotCreateTab";
 import { StatusTab } from "@/components/teacher/StatusTab";
@@ -61,6 +62,7 @@ export default function TeacherPage() {
           </h2>
         </div>
         <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+          <AppearanceSettingsButtons className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition border border-slate-700" />
           <button
             onClick={() => setPwModalOpen(true)}
             className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition border border-slate-700 flex items-center gap-1.5"

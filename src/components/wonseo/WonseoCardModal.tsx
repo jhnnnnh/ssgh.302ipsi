@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GraduationCap, Paperclip } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
 import { WonseoImageThumb } from "@/components/wonseo/WonseoImageThumb";
+import { RecentResultsEditor } from "@/components/wonseo/RecentResultsEditor";
+import { emptyResultYear } from "@/components/wonseo/RecentResultsTable";
 import { buildStoragePath, deleteWonseoImageFile, uploadWonseoImage } from "@/lib/wonseo-storage";
 import {
   LEVEL_OPTIONS,
@@ -17,6 +19,7 @@ import { cn } from "@/lib/cn";
 import type {
   ApplicationCategory,
   ApplicationStatus,
+  RecentResultYear,
   SelectionMode,
   SupportLevel,
   WonseoCard,
@@ -40,6 +43,7 @@ interface FormState {
   hasExamDate: boolean;
   examDate: string;
   memo: string;
+  recentResults: RecentResultYear[];
 }
 
 const EMPTY_FORM: FormState = {
@@ -48,7 +52,7 @@ const EMPTY_FORM: FormState = {
   status: "지원예정",
   university: "",
   department: "",
-  category: "학생부종합",
+  category: "학생부교과",
   subCategory: "",
   selectionMode: "single",
   stageSingle: "",
@@ -59,7 +63,13 @@ const EMPTY_FORM: FormState = {
   hasExamDate: false,
   examDate: "",
   memo: "",
+  recentResults: [],
 };
+
+function defaultRecentResultYears(): RecentResultYear[] {
+  const thisYear = new Date().getFullYear();
+  return [thisYear - 1, thisYear - 2, thisYear - 3].map((y) => emptyResultYear(String(y)));
+}
 
 function cardToForm(card: WonseoCard): FormState {
   return {
@@ -79,6 +89,7 @@ function cardToForm(card: WonseoCard): FormState {
     hasExamDate: card.has_exam_date,
     examDate: card.exam_date ?? "",
     memo: card.memo ?? "",
+    recentResults: card.recent_results ?? [],
   };
 }
 
@@ -88,6 +99,7 @@ export function WonseoCardModal({
   studentId,
   editingCard,
   canEditStatus,
+  nextSortOrder,
   onSaved,
 }: {
   open: boolean;
@@ -95,6 +107,7 @@ export function WonseoCardModal({
   studentId: string;
   editingCard: WonseoCard | null;
   canEditStatus: boolean;
+  nextSortOrder?: number;
   onSaved: () => void;
 }) {
   const showToast = useToast();
@@ -102,12 +115,19 @@ export function WonseoCardModal({
   const [existingImages, setExistingImages] = useState<WonseoImage[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
+  const [universityError, setUniversityError] = useState(false);
+  const universityRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setForm(editingCard ? cardToForm(editingCard) : EMPTY_FORM);
+    setForm(
+      editingCard
+        ? cardToForm(editingCard)
+        : { ...EMPTY_FORM, recentResults: defaultRecentResultYears() },
+    );
     setNewFiles([]);
+    setUniversityError(false);
     if (editingCard) {
       const supabase = createClient();
       supabase
@@ -141,9 +161,13 @@ export function WonseoCardModal({
 
   async function handleSave() {
     if (!form.university.trim()) {
+      setUniversityError(true);
       showToast("대학교명을 입력해 주세요.", "error");
+      universityRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      universityRef.current?.focus();
       return;
     }
+    setUniversityError(false);
     setSaving(true);
     const supabase = createClient();
 
@@ -165,6 +189,7 @@ export function WonseoCardModal({
       has_exam_date: form.hasExamDate,
       exam_date: form.hasExamDate ? form.examDate.trim() || null : null,
       memo: form.memo.trim() || null,
+      recent_results: form.recentResults,
       updated_at: new Date().toISOString(),
     };
 
@@ -180,7 +205,7 @@ export function WonseoCardModal({
     } else {
       const { data, error } = await supabase
         .from("wonseo_cards")
-        .insert(payload)
+        .insert({ ...payload, sort_order: nextSortOrder ?? 0 })
         .select("id")
         .single();
       if (error || !data) {
@@ -291,12 +316,23 @@ export function WonseoCardModal({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="block font-bold text-slate-700 mb-1">대학교명</label>
+          <label className="block font-bold text-slate-700 mb-1">
+            대학교명 {universityError && <span className="text-rose-500">(필수)</span>}
+          </label>
           <input
+            ref={universityRef}
             value={form.university}
-            onChange={(e) => set("university", e.target.value)}
+            onChange={(e) => {
+              set("university", e.target.value);
+              if (universityError) setUniversityError(false);
+            }}
             placeholder="OO대학교"
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className={cn(
+              "w-full bg-slate-50 border rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2",
+              universityError
+                ? "border-rose-400 focus:ring-rose-400"
+                : "border-slate-300 focus:ring-indigo-500",
+            )}
           />
         </div>
         <div>
@@ -459,6 +495,11 @@ export function WonseoCardModal({
           />
         )}
       </div>
+
+      <RecentResultsEditor
+        years={form.recentResults}
+        onChange={(next) => set("recentResults", next)}
+      />
 
       <div>
         <label className="block font-bold text-slate-700 mb-1">메모</label>

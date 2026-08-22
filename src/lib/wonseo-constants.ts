@@ -30,6 +30,14 @@ export const LEVEL_EMPHASIS_STYLE: Record<SupportLevel, { badge: string; border:
   하향: { badge: "bg-blue-600 text-white", border: "border-blue-300", bar: "bg-blue-500" },
 };
 
+/** 수시 원서 표(화면)에서 지원 정도 값 셀을 강조하는 스타일 */
+export const LEVEL_TABLE_CELL_STYLE: Record<SupportLevel, string> = {
+  상향: "bg-rose-100 text-rose-700",
+  소신: "bg-amber-100 text-amber-700",
+  적정: "bg-emerald-100 text-emerald-700",
+  하향: "bg-blue-100 text-blue-700",
+};
+
 /** 전형 유형 빠른 선택 버튼 (그 외 값은 "직접입력"으로 취급) */
 export const QUICK_CATEGORY_OPTIONS = ["학생부교과", "학생부종합"] as const;
 

@@ -122,7 +122,7 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
                 <div
                   key={slot.id}
                   className={cn(
-                    "rounded-2xl border p-4 flex flex-col gap-3",
+                    "rounded-2xl border p-4 flex flex-row items-center justify-between gap-3 sm:flex-col sm:items-stretch",
                     isMine && "bg-indigo-50 border-indigo-300",
                     isTaken && "bg-slate-100 border-slate-200",
                     !slot.is_booked && "bg-white border-slate-200",
@@ -141,13 +141,13 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
                     <button
                       onClick={() => handleCancel(slot.id)}
                       disabled={busyId === slot.id}
-                      className="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
+                      className="shrink-0 px-4 py-2 sm:w-full sm:px-0 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
                     >
                       취소하기
                     </button>
                   )}
                   {isTaken && (
-                    <span className="w-full py-2 bg-slate-200 text-slate-500 rounded-xl text-xs font-bold text-center">
+                    <span className="shrink-0 px-4 py-2 sm:w-full sm:px-0 bg-slate-200 text-slate-500 rounded-xl text-xs font-bold text-center">
                       신청 마감
                     </span>
                   )}
@@ -155,7 +155,7 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
                     <button
                       onClick={() => handleBook(slot.id)}
                       disabled={busyId === slot.id}
-                      className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
+                      className="shrink-0 px-4 py-2 sm:w-full sm:px-0 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
                     >
                       신청하기
                     </button>

@@ -3,18 +3,56 @@
 :root {
   --background: #f8fafc;
   --foreground: #1e293b;
+  --font-sans: "Pretendard", system-ui, -apple-system, sans-serif;
+  --font-scale: 1;
+}
+
+/* 앱 전체가 rem 단위(text-xs 등)를 쓰므로, 글씨 크기 설정은 rem의 기준이 되는
+   루트 font-size 자체를 배율만큼 조정해서 반영한다. */
+html {
+  font-size: calc(16px * var(--font-scale));
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-sans);
+}
+
+/* 학생이 고를 수 있는 웹폰트 중 구글 폰트에 없는 것들 (직접 @font-face 등록) */
+@font-face {
+  font-family: "Cafe24Anemone";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/Cafe24Ohsquare.woff")
+    format("woff");
+  font-weight: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "GMarketSans";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansLight.woff")
+    format("woff");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "GMarketSans";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff")
+    format("woff");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "GMarketSans";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff")
+    format("woff");
+  font-weight: 700;
+  font-display: swap;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
 }
 
 ::-webkit-scrollbar {

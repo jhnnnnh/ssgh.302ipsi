@@ -22,6 +22,9 @@ export function EditSlotModal({
   const confirm = useConfirm();
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [studentName, setStudentName] = useState("");
+  const [memo, setMemo] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -29,6 +32,9 @@ export function EditSlotModal({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setStart(slot.start_time.slice(0, 5));
       setEnd(slot.end_time.slice(0, 5));
+      setStudentId(slot.student_id ?? "");
+      setStudentName(slot.student_name ?? "");
+      setMemo(slot.memo ?? "");
     }
   }, [slot]);
 
@@ -40,10 +46,21 @@ export function EditSlotModal({
       return;
     }
     setSaving(true);
+    const trimmedId = studentId.trim();
+    const trimmedName = studentName.trim();
+    const willBeBooked = Boolean(trimmedId && trimmedName);
     const supabase = createClient();
     const { error } = await supabase
       .from("counseling_slots")
-      .update({ start_time: start, end_time: end })
+      .update({
+        start_time: start,
+        end_time: end,
+        is_booked: willBeBooked,
+        student_id: willBeBooked ? trimmedId : null,
+        student_name: willBeBooked ? trimmedName : null,
+        booked_at: willBeBooked ? (slot!.booked_at ?? new Date().toISOString()) : null,
+        memo: memo.trim() || null,
+      })
       .eq("id", slot!.id);
     setSaving(false);
     if (error) {
@@ -128,18 +145,34 @@ export function EditSlotModal({
             </button>
           )}
         </div>
-        {slot.is_booked ? (
-          <div className="grid grid-cols-2 gap-2 text-xs text-slate-700 font-semibold">
-            <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-              {slot.student_id}
-            </div>
-            <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-              {slot.student_name}
-            </div>
-          </div>
-        ) : (
-          <p className="text-[11px] text-slate-400">예약된 학생이 없습니다.</p>
-        )}
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            value={studentId}
+            onChange={(e) => setStudentId(e.target.value)}
+            placeholder="학번"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800"
+          />
+          <input
+            value={studentName}
+            onChange={(e) => setStudentName(e.target.value)}
+            placeholder="이름"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800"
+          />
+        </div>
+        <p className="text-[11px] text-slate-400 mt-1.5">
+          학번과 이름을 모두 입력하면 예약으로 등록되고, 비워두면 예약이 해제됩니다.
+        </p>
+      </div>
+
+      <div className="border-t border-slate-100 pt-3">
+        <label className="block text-xs font-bold text-slate-700 mb-1">메모</label>
+        <textarea
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
+          rows={2}
+          placeholder="이 상담/예약에 대한 메모를 남겨보세요."
+          className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-800 resize-y"
+        />
       </div>
     </Modal>
   );

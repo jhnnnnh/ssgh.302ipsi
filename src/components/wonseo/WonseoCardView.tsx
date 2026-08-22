@@ -1,24 +1,41 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { CalendarClock, Pencil, Trash2 } from "lucide-react";
+import { forwardRef, useEffect, useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { WonseoImageThumb } from "@/components/wonseo/WonseoImageThumb";
+import { WonseoAttachmentPreview } from "@/components/wonseo/WonseoAttachmentPreview";
+import { WonseoGalleryModal } from "@/components/wonseo/WonseoGalleryModal";
+import { RecentResultsSection } from "@/components/wonseo/RecentResultsSection";
 import { LEVEL_EMPHASIS_STYLE, STATUS_BADGE_STYLE, STATUS_OPTIONS } from "@/lib/wonseo-constants";
 import type { WonseoCard, WonseoImage } from "@/lib/database.types";
 
-export function WonseoCardView({
-  card,
-  showStatus,
-  onEdit,
-  onDelete,
-}: {
-  card: WonseoCard;
-  showStatus: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <p>
+      <span className="text-slate-500">{label} </span>
+      <span className="font-semibold text-slate-800">{value}</span>
+    </p>
+  );
+}
+
+export const WonseoCardView = forwardRef<
+  HTMLDivElement,
+  {
+    card: WonseoCard;
+    showStatus: boolean;
+    onEdit: () => void;
+    onDelete: () => void;
+    minHeight?: number;
+    style?: React.CSSProperties;
+    className?: string;
+    dragHandle?: React.ReactNode;
+  }
+>(function WonseoCardView(
+  { card, showStatus, onEdit, onDelete, minHeight, style, className, dragHandle },
+  ref,
+) {
   const [images, setImages] = useState<WonseoImage[]>([]);
+  const [galleryOpen, setGalleryOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -33,14 +50,24 @@ export function WonseoCardView({
 
   const emphasis = LEVEL_EMPHASIS_STYLE[card.level];
 
+  const methodValue =
+    card.selection_mode === "single"
+      ? card.stage_single
+      : [card.stage_1 && `1단계 ${card.stage_1}`, card.stage_2 && `2단계 ${card.stage_2}`]
+          .filter(Boolean)
+          .join(" · ");
+
   return (
     <div
-      className={`bg-white rounded-3xl border-2 ${emphasis.border} shadow-sm overflow-hidden flex`}
+      ref={ref}
+      style={{ ...(minHeight ? { minHeight } : undefined), ...style }}
+      className={`bg-white rounded-3xl border-2 ${emphasis.border} shadow-sm overflow-hidden flex ${className ?? ""}`}
     >
       <div className={`w-2 shrink-0 ${emphasis.bar}`} />
       <div className="flex-1 p-5 space-y-3 min-w-0">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
+          {dragHandle}
           <span className="text-xs font-black text-slate-900">{card.rank || "지망 미지정"}</span>
           <span
             className={`text-[11px] font-black px-2.5 py-1 rounded-lg ${emphasis.badge}`}
@@ -71,53 +98,57 @@ export function WonseoCardView({
         </div>
       </div>
 
-      <div>
-        <h4 className="text-base font-black text-slate-900">{card.university}</h4>
-        <p className="text-xs text-slate-500 font-semibold">{card.department}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-baseline gap-2 min-w-0 flex-1">
+          <h4
+            className="text-base font-black text-slate-900 truncate shrink-0"
+            style={{ maxWidth: "58%" }}
+          >
+            {card.university}
+          </h4>
+          <span className="text-[15px] font-bold text-slate-900 truncate min-w-0">
+            {card.department}
+          </span>
+        </div>
+        <WonseoAttachmentPreview images={images} onClick={() => setGalleryOpen(true)} />
       </div>
 
       <div className="flex flex-wrap gap-1.5 text-[11px] font-bold">
-        <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-lg">{card.category}</span>
+        <span className="border border-slate-300 text-slate-700 px-2 py-1 rounded-lg">
+          {card.category}
+        </span>
         {card.sub_category && (
-          <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-lg">
+          <span className="border border-slate-300 text-slate-700 px-2 py-1 rounded-lg">
             {card.sub_category}
           </span>
         )}
       </div>
 
-      <div className="text-xs text-slate-600 space-y-1 border-t border-slate-100 pt-3">
-        {card.selection_mode === "single" ? (
-          card.stage_single && <p>· {card.stage_single}</p>
-        ) : (
-          <>
-            {card.stage_1 && <p>· 1단계: {card.stage_1}</p>}
-            {card.stage_2 && <p>· 2단계: {card.stage_2}</p>}
-          </>
+      <div className="text-xs space-y-1 border-t border-slate-100 pt-3">
+        {methodValue && <InfoRow label="전형방법" value={methodValue} />}
+        {(card.calculated_grade || card.min_standard) && (
+          <div className="flex flex-wrap gap-x-4">
+            {card.calculated_grade && <InfoRow label="등급" value={card.calculated_grade} />}
+            {card.min_standard && <InfoRow label="최저" value={card.min_standard} />}
+          </div>
         )}
-        {card.calculated_grade && <p>· 산출 등급: {card.calculated_grade}</p>}
-        {card.min_standard && <p>· 수능 최저: {card.min_standard}</p>}
-        {card.has_exam_date && card.exam_date && (
-          <p className="flex items-center gap-1 text-indigo-600 font-bold">
-            <CalendarClock className="w-3 h-3" />
-            {card.exam_date}
-          </p>
-        )}
+        {card.has_exam_date && card.exam_date && <InfoRow label="일정" value={card.exam_date} />}
       </div>
 
+      <RecentResultsSection years={card.recent_results ?? []} />
+
       {card.memo && (
-        <p className="text-xs text-slate-500 bg-slate-50 rounded-xl p-3 whitespace-pre-wrap">
+        <p className="text-xs text-amber-900 bg-amber-100 rounded-xl p-3 whitespace-pre-wrap shadow-md shadow-amber-900/5 -rotate-1">
           {card.memo}
         </p>
       )}
 
-      {images.length > 0 && (
-        <div className="flex flex-wrap gap-2 pt-1">
-          {images.map((img) => (
-            <WonseoImageThumb key={img.id} path={img.storage_path} />
-          ))}
-        </div>
-      )}
       </div>
+      <WonseoGalleryModal
+        open={galleryOpen}
+        onClose={() => setGalleryOpen(false)}
+        images={images}
+      />
     </div>
   );
-}
+});

@@ -1,0 +1,68 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+
+/**
+ * 그리드 안의 카드 높이를 목록 전체에서 가장 긴 카드에 맞춰 통일한다.
+ * (같은 행뿐 아니라 다른 행에 있는 카드끼리도 전부 동일해진다.)
+ *
+ * 각 카드의 "실제 콘텐츠 높이"는 카드 자신(ref)으로 측정하고, 계산된
+ * min-height도 그 같은 요소에 돌려준다. min-height는 바닥값일 뿐이라
+ * 자기 자신을 측정하는 데 써도 순환 문제가 생기지 않는다: 내용이 더
+ * 길어지면 자연스럽게 그만큼 커지고, 그 변화가 다시 감지된다.
+ *
+ * 화면이 1열(모바일)로 좁아지면 통일을 끄고 각 카드가 자기 내용 길이대로
+ * 자연스러운 높이를 갖도록 한다.
+ *
+ * @param resetKey - 카드 개수뿐 아니라 "어떤 카드들이 표시되는지"가 바뀔 때마다
+ *   (예: 카드 id 목록을 join한 문자열) 새로 넘겨줘야 옵저버가 새 DOM으로 재연결된다.
+ *   카드 개수는 같은데 다른 목록으로 바뀌는 경우(예: 교사가 다른 학생을 선택)를
+ *   놓치지 않기 위함이다.
+ * @param multiColumnBreakpointPx - 이 너비 이상일 때만("1열이 아닐 때만") 높이를
+ *   통일한다. 프로젝트의 Tailwind `md` 브레이크포인트(768px)에 맞춘 기본값.
+ */
+export function useEqualHeights(resetKey: string, count: number, multiColumnBreakpointPx = 768) {
+  const [maxHeight, setMaxHeight] = useState<number | undefined>(undefined);
+  const [multiColumn, setMultiColumn] = useState(false);
+  const refs = useRef<(HTMLElement | null)[]>([]);
+  const heights = useRef<number[]>([]);
+
+  const setRef = useCallback(
+    (index: number) => (el: HTMLElement | null) => {
+      refs.current[index] = el;
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${multiColumnBreakpointPx}px)`);
+    const update = () => setMultiColumn(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [multiColumnBreakpointPx]);
+
+  useEffect(() => {
+    heights.current = new Array(count).fill(0);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMaxHeight(undefined);
+    if (count === 0) return;
+
+    const observers: ResizeObserver[] = [];
+
+    refs.current.slice(0, count).forEach((el, i) => {
+      if (!el) return;
+      const ro = new ResizeObserver((entries) => {
+        const h = entries[0].contentRect.height;
+        heights.current[i] = h;
+        setMaxHeight(Math.max(...heights.current));
+      });
+      ro.observe(el);
+      observers.push(ro);
+    });
+
+    return () => observers.forEach((ro) => ro.disconnect());
+  }, [resetKey, count]);
+
+  return { setRef, maxHeight: multiColumn ? maxHeight : undefined };
+}
