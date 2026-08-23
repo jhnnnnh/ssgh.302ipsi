@@ -25,7 +25,8 @@ const ActiveClassContext = createContext<ActiveClassContextValue | null>(null);
  */
 export function ActiveClassProvider({ children }: { children: React.ReactNode }) {
   const { profile } = useAuth();
-  const isAdmin = profile?.teacher_role === "admin";
+  const isAdmin =
+    profile?.teacher_role === "admin" || Boolean(profile?.dual_admin && profile.admin_mode_enabled);
   const [classOptions, setClassOptions] = useState<ClassOption[]>([]);
   const [selected, setSelected] = useState<{ grade: number; classNo: number } | null>(null);
   const [loading, setLoading] = useState(true);

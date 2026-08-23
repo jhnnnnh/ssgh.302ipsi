@@ -38,6 +38,8 @@ export type Profile = {
   teacher_role: TeacherRole | null;
   grade: number | null;
   class_no: number | null;
+  dual_admin: boolean;
+  admin_mode_enabled: boolean;
   created_at: string;
 };
 

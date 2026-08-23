@@ -40,14 +40,14 @@ export function EditSlotModal({
 
   if (!slot) return null;
 
-  async function handleSave() {
+  async function saveSlot(studentIdValue: string, studentNameValue: string) {
     if (!isValidTime(start) || !isValidTime(end) || start >= end) {
       showToast("올바른 시간 형식(HH:MM), 종료 > 시작을 확인해 주세요.", "error");
-      return;
+      return false;
     }
     setSaving(true);
-    const trimmedId = studentId.trim();
-    const trimmedName = studentName.trim();
+    const trimmedId = studentIdValue.trim();
+    const trimmedName = studentNameValue.trim();
     const willBeBooked = Boolean(trimmedId && trimmedName);
     const supabase = createClient();
     const { error } = await supabase
@@ -65,26 +65,30 @@ export function EditSlotModal({
     setSaving(false);
     if (error) {
       showToast("저장에 실패했습니다.", "error");
-      return;
+      return false;
     }
+    return true;
+  }
+
+  async function handleSave() {
+    const ok = await saveSlot(studentId, studentName);
+    if (!ok) return;
     showToast("슬롯 정보가 수정되었습니다.", "success");
     onSaved();
     onClose();
   }
 
-  async function handleForceCancel() {
+  async function handleCancelReservation() {
     const ok = await confirm({
-      message: "이 슬롯의 예약을 강제로 취소하시겠습니까?",
+      message: "이 슬롯의 예약을 취소하시겠습니까?",
       confirmLabel: "예약 취소",
       danger: true,
     });
     if (!ok) return;
-    const supabase = createClient();
-    const { error } = await supabase.rpc("cancel_slot", { p_slot_id: slot!.id });
-    if (error) {
-      showToast(error.message, "error");
-      return;
-    }
+    setStudentId("");
+    setStudentName("");
+    const saved = await saveSlot("", "");
+    if (!saved) return;
     showToast("예약이 취소되었습니다.", "success");
     onSaved();
   }
@@ -138,10 +142,11 @@ export function EditSlotModal({
           <label className="block text-xs font-bold text-slate-700">예약 학생 정보</label>
           {slot.is_booked && (
             <button
-              onClick={handleForceCancel}
-              className="text-[11px] font-bold text-rose-600 hover:underline"
+              onClick={handleCancelReservation}
+              disabled={saving}
+              className="text-[11px] font-bold text-rose-600 hover:underline disabled:opacity-50"
             >
-              예약 강제 취소
+              예약 취소
             </button>
           )}
         </div>

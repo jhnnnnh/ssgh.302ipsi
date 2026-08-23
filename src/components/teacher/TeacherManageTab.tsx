@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Pencil, ShieldUser, UserCog, UserPlus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Pencil, ShieldUser, Trash2, UserCog, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
+import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/cn";
 import { formatClassLabel } from "@/lib/student-id";
+import { useAuth } from "@/components/providers/AuthProvider";
 import type { Profile, TeacherRole } from "@/lib/database.types";
 
 function useTeachers() {
@@ -29,7 +31,19 @@ function useTeachers() {
     reload();
   }, []);
 
-  return { teachers, loading, reload };
+  const sorted = useMemo(
+    () =>
+      [...teachers].sort((a, b) => {
+        // 담당 반 없음(전체관리자)은 맨 앞, 나머지는 학년/반 순
+        if (a.grade == null && b.grade == null) return 0;
+        if (a.grade == null) return -1;
+        if (b.grade == null) return 1;
+        return a.grade - b.grade || (a.class_no ?? 0) - (b.class_no ?? 0);
+      }),
+    [teachers],
+  );
+
+  return { teachers: sorted, loading, reload };
 }
 
 type TeacherFormState = {
@@ -50,11 +64,14 @@ const EMPTY_FORM: TeacherFormState = {
 
 export function TeacherManageTab() {
   const showToast = useToast();
+  const confirm = useConfirm();
+  const { profile: myProfile } = useAuth();
   const { teachers, reload } = useTeachers();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Profile | null>(null);
   const [form, setForm] = useState<TeacherFormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   function openCreate() {
     setEditing(null);
@@ -77,9 +94,36 @@ export function TeacherManageTab() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  async function handleDelete(teacher: Profile) {
+    const ok = await confirm({
+      message: `${teacher.name} 교사 계정을 삭제하시겠습니까? 되돌릴 수 없습니다.`,
+      confirmLabel: "삭제",
+      danger: true,
+    });
+    if (!ok) return;
+    setBusyId(teacher.id);
+    const res = await fetch("/api/admin/delete-teacher", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ teacherId: teacher.id }),
+    });
+    const data = await res.json();
+    setBusyId(null);
+    if (!res.ok) {
+      showToast(data.error ?? "삭제에 실패했습니다.", "error");
+      return;
+    }
+    showToast("교사 계정이 삭제되었습니다.", "success");
+    reload();
+  }
+
   async function handleSave() {
     if (form.teacherRole === "homeroom" && (!form.grade || !form.classNo)) {
       showToast("담당 반(학년/반)을 입력해 주세요.", "error");
+      return;
+    }
+    if (editing && form.password && form.password.length < 6) {
+      showToast("새 비밀번호는 6자 이상이어야 합니다.", "error");
       return;
     }
     setSaving(true);
@@ -96,10 +140,25 @@ export function TeacherManageTab() {
         }),
       });
       const data = await res.json();
-      setSaving(false);
       if (!res.ok) {
+        setSaving(false);
         showToast(data.error ?? "수정에 실패했습니다.", "error");
         return;
+      }
+      if (form.password) {
+        const pwRes = await fetch("/api/admin/reset-teacher-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ teacherId: editing.id, newPassword: form.password }),
+        });
+        const pwData = await pwRes.json();
+        setSaving(false);
+        if (!pwRes.ok) {
+          showToast(pwData.error ?? "비밀번호 변경에 실패했습니다.", "error");
+          return;
+        }
+      } else {
+        setSaving(false);
       }
       showToast("교사 정보가 수정되었습니다.", "success");
     } else {
@@ -186,13 +245,23 @@ export function TeacherManageTab() {
                       : "해당 없음"}
                   </td>
                   <td className="px-5 py-3">
-                    <button
-                      onClick={() => openEdit(t)}
-                      className="text-slate-400 hover:text-indigo-600"
-                      title="수정"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openEdit(t)}
+                        className="text-slate-400 hover:text-indigo-600"
+                        title="수정"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(t)}
+                        disabled={busyId === t.id || t.id === myProfile?.id}
+                        className="text-slate-400 hover:text-rose-500 disabled:opacity-30 disabled:cursor-not-allowed"
+                        title={t.id === myProfile?.id ? "본인 계정은 삭제할 수 없습니다" : "삭제"}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -250,6 +319,20 @@ export function TeacherManageTab() {
               value={form.password}
               onChange={(e) => set("password", e.target.value)}
               placeholder="6자 이상"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+        )}
+        {editing && (
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">
+              비밀번호 변경 <span className="text-slate-400 font-normal">(선택)</span>
+            </label>
+            <input
+              type="password"
+              value={form.password}
+              onChange={(e) => set("password", e.target.value)}
+              placeholder="바꾸지 않으려면 비워두세요"
               className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>

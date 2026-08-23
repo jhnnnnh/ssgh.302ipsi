@@ -1,35 +1,95 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarX, FileDown, ListChecks, Pencil, Trash2 } from "lucide-react";
+import {
+  CalendarPlus,
+  CalendarX,
+  FileDown,
+  History,
+  ListChecks,
+  Pencil,
+  Settings,
+  SquarePlus,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useCounselingSlots } from "@/lib/hooks/useCounselingSlots";
+import { useFavorites } from "@/lib/hooks/useFavorites";
+import { useEqualHeights } from "@/lib/hooks/useEqualHeights";
 import { useActiveClass } from "@/components/providers/ActiveClassProvider";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { DateTabs } from "@/components/ui/DateTabs";
 import { EditSlotModal } from "@/components/teacher/EditSlotModal";
+import { AddDateModal } from "@/components/teacher/AddDateModal";
+import { FavoritesSettingsModal } from "@/components/teacher/FavoritesSettingsModal";
 import { downloadCsv } from "@/lib/csv";
-import { formatTime } from "@/lib/time";
+import {
+  autoFormatTime,
+  addMinutesToTime,
+  formatTime,
+  isValidTime,
+  isWeekendDate,
+  timeRangesOverlap,
+  todayDateString,
+} from "@/lib/time";
 import type { CounselingSlot } from "@/lib/database.types";
+
+const FIELD_CLASS =
+  "w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500";
+const BUTTON_CLASS =
+  "px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center justify-center gap-2";
+const LABEL_CLASS = "block text-xs font-bold text-slate-600 mb-1";
+
+function findOverlap(existing: CounselingSlot[], date: string, start: string, end: string) {
+  return existing.find(
+    (s) => s.date === date && timeRangesOverlap(start, end, formatTime(s.start_time), formatTime(s.end_time)),
+  );
+}
 
 export function StatusTab() {
   const { grade, classNo } = useActiveClass();
   const { slots, reload } = useCounselingSlots(
     grade != null && classNo != null ? { grade, classNo } : null,
   );
+  const { favorites, reload: reloadFavorites } = useFavorites();
   const showToast = useToast();
   const confirm = useConfirm();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [extraDates, setExtraDates] = useState<string[]>([]);
+  const [showPastDates, setShowPastDates] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [editingSlot, setEditingSlot] = useState<CounselingSlot | null>(null);
+  const [addDateModalOpen, setAddDateModalOpen] = useState(false);
+  const [favoritesModalOpen, setFavoritesModalOpen] = useState(false);
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+  const [endTouched, setEndTouched] = useState(false);
 
-  const dates = useMemo(
-    () => Array.from(new Set(slots.map((s) => s.date))).sort(),
-    [slots],
+  const allDates = useMemo(
+    () => Array.from(new Set([...slots.map((s) => s.date), ...extraDates])).sort(),
+    [slots, extraDates],
   );
-  const activeDate = selectedDate ?? dates[0] ?? null;
+  const today = todayDateString();
+  const visibleDates = useMemo(
+    () => (showPastDates ? allDates : allDates.filter((d) => d >= today)),
+    [allDates, showPastDates, today],
+  );
+
+  const defaultDate = useMemo(() => {
+    if (visibleDates.length === 0) return null;
+    if (visibleDates.includes(today)) return today;
+    const todayMs = new Date(`${today}T00:00:00`).getTime();
+    return visibleDates.reduce((closest, d) => {
+      const diff = Math.abs(new Date(`${d}T00:00:00`).getTime() - todayMs);
+      const closestDiff = Math.abs(new Date(`${closest}T00:00:00`).getTime() - todayMs);
+      return diff < closestDiff ? d : closest;
+    }, visibleDates[0]);
+  }, [visibleDates, today]);
+
+  const activeDate = selectedDate ?? defaultDate;
 
   const daySlots = useMemo(
     () =>
@@ -38,6 +98,103 @@ export function StatusTab() {
         .sort((a, b) => a.start_time.localeCompare(b.start_time)),
     [slots, activeDate],
   );
+
+  const { setRef: setSlotCardRef, maxHeight: slotCardHeight } = useEqualHeights(
+    daySlots.map((s) => s.id).join("|"),
+    daySlots.length,
+  );
+
+  const activeFavoriteCategory = activeDate ? (isWeekendDate(activeDate) ? "weekend" : "weekday") : "weekday";
+  const visibleFavorites = useMemo(
+    () => favorites.filter((f) => f.category === activeFavoriteCategory),
+    [favorites, activeFavoriteCategory],
+  );
+
+  function handleStartChange(value: string) {
+    const formatted = autoFormatTime(value);
+    setStart(formatted);
+    if (!endTouched && isValidTime(formatted)) {
+      setEnd(addMinutesToTime(formatted, 60));
+    }
+  }
+  function handleEndChange(value: string) {
+    setEndTouched(true);
+    setEnd(autoFormatTime(value));
+  }
+
+  function handleAddDate(date: string) {
+    setExtraDates((prev) => (prev.includes(date) ? prev : [...prev, date]));
+    setSelectedDate(date);
+  }
+
+  async function createNewSlot() {
+    if (grade == null || classNo == null) {
+      showToast("반 정보를 확인할 수 없습니다.", "error");
+      return;
+    }
+    if (!activeDate) {
+      showToast("먼저 날짜를 선택하거나 추가해 주세요.", "error");
+      return;
+    }
+    if (!isValidTime(start) || !isValidTime(end)) {
+      showToast("시작/종료 시간을 HH:MM 형식으로 입력해 주세요.", "error");
+      return;
+    }
+    if (start >= end) {
+      showToast("종료 시간은 시작 시간보다 늦어야 합니다.", "error");
+      return;
+    }
+    const conflict = findOverlap(slots, activeDate, start, end);
+    if (conflict) {
+      showToast(
+        `이미 ${formatTime(conflict.start_time)}~${formatTime(conflict.end_time)} 슬롯과 시간이 겹쳐서 추가할 수 없습니다.`,
+        "error",
+      );
+      return;
+    }
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("counseling_slots")
+      .insert({ date: activeDate, start_time: start, end_time: end, grade, class_no: classNo });
+    if (error) {
+      showToast("슬롯 생성에 실패했습니다.", "error");
+      return;
+    }
+    showToast("상담 슬롯이 추가되었습니다.", "success");
+    setStart("");
+    setEnd("");
+    setEndTouched(false);
+  }
+
+  async function addSingleFavorite(f: { start_time: string; end_time: string }) {
+    if (grade == null || classNo == null) {
+      showToast("반 정보를 확인할 수 없습니다.", "error");
+      return;
+    }
+    if (!activeDate) {
+      showToast("먼저 날짜를 선택하거나 추가해 주세요.", "error");
+      return;
+    }
+    const start_time = formatTime(f.start_time);
+    const end_time = formatTime(f.end_time);
+    const conflict = findOverlap(slots, activeDate, start_time, end_time);
+    if (conflict) {
+      showToast(
+        `이미 ${formatTime(conflict.start_time)}~${formatTime(conflict.end_time)} 슬롯과 시간이 겹쳐서 추가할 수 없습니다.`,
+        "error",
+      );
+      return;
+    }
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("counseling_slots")
+      .insert({ date: activeDate, start_time, end_time, grade, class_no: classNo });
+    if (error) {
+      showToast("슬롯 생성에 실패했습니다.", "error");
+      return;
+    }
+    showToast("상담 슬롯이 추가되었습니다.", "success");
+  }
 
   function toggleCheck(id: string) {
     setChecked((prev) => {
@@ -134,7 +291,28 @@ export function StatusTab() {
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <DateTabs dates={dates} selected={activeDate} onSelect={setSelectedDate} />
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+            <DateTabs dates={visibleDates} selected={activeDate} onSelect={setSelectedDate} />
+            <button
+              onClick={() => setAddDateModalOpen(true)}
+              className="shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold border transition whitespace-nowrap bg-white text-slate-600 border-slate-200 hover:bg-slate-50 flex items-center gap-1.5"
+            >
+              <CalendarPlus className="w-3.5 h-3.5" />
+              <span>날짜 추가</span>
+            </button>
+            <button
+              onClick={() => setShowPastDates((v) => !v)}
+              className={cn(
+                "shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold border transition whitespace-nowrap flex items-center gap-1.5",
+                showPastDates
+                  ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50",
+              )}
+            >
+              <History className="w-3.5 h-3.5" />
+              <span>지난 날짜 보기</span>
+            </button>
+          </div>
           {daySlots.length > 0 && (
             <button
               onClick={() => toggleCheckAll(!allChecked)}
@@ -145,11 +323,71 @@ export function StatusTab() {
           )}
         </div>
 
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+          <div>
+            <label className={LABEL_CLASS}>시작 시간</label>
+            <input
+              value={start}
+              onChange={(e) => handleStartChange(e.target.value)}
+              placeholder="13:00"
+              className={`${FIELD_CLASS} font-mono`}
+            />
+          </div>
+          <div>
+            <label className={LABEL_CLASS}>종료 시간</label>
+            <input
+              value={end}
+              onChange={(e) => handleEndChange(e.target.value)}
+              placeholder="13:30"
+              className={`${FIELD_CLASS} font-mono`}
+            />
+          </div>
+          <button onClick={createNewSlot} className={`${BUTTON_CLASS} sm:col-span-2`}>
+            <SquarePlus className="w-3.5 h-3.5" />
+            <span>슬롯 추가</span>
+          </button>
+        </div>
+
+        <div className="bg-amber-50/60 border border-amber-200/70 rounded-2xl p-4 space-y-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-bold text-amber-800 flex items-center gap-1.5">
+              <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+              <span>{activeFavoriteCategory === "weekend" ? "휴일 즐겨찾기" : "평일 즐겨찾기"}</span>
+            </span>
+            <button
+              onClick={() => setFavoritesModalOpen(true)}
+              className="text-[11px] font-bold text-slate-500 hover:text-indigo-600 underline flex items-center gap-1 shrink-0"
+            >
+              <Settings className="w-3 h-3" />
+              <span>설정</span>
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {visibleFavorites.length === 0 && (
+              <p className="text-[11px] text-slate-400">
+                등록된 즐겨찾기가 없습니다. &ldquo;설정&rdquo;에서 추가해 보세요.
+              </p>
+            )}
+            {visibleFavorites.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => addSingleFavorite(f)}
+                title="클릭하면 이 시간대로 슬롯이 바로 추가됩니다"
+                className="shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold border transition whitespace-nowrap bg-white text-slate-700 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50"
+              >
+                {formatTime(f.start_time)}~{formatTime(f.end_time)}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {daySlots.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 pt-2">
-            {daySlots.map((s) => (
+            {daySlots.map((s, index) => (
               <div
                 key={s.id}
+                ref={setSlotCardRef(index)}
+                style={slotCardHeight ? { minHeight: slotCardHeight } : undefined}
                 className={cn(
                   "rounded-2xl border p-4 flex flex-col gap-2.5",
                   s.is_booked
@@ -158,7 +396,7 @@ export function StatusTab() {
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  <label className="flex items-center gap-2 flex-wrap cursor-pointer">
                     <input
                       type="checkbox"
                       checked={checked.has(s.id)}
@@ -168,6 +406,11 @@ export function StatusTab() {
                     <span className="text-sm font-black text-slate-900">
                       {formatTime(s.start_time)} ~ {formatTime(s.end_time)}
                     </span>
+                    {s.is_booked && (
+                      <span className="text-[11px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+                        {s.student_id} {s.student_name}
+                      </span>
+                    )}
                   </label>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
@@ -186,16 +429,11 @@ export function StatusTab() {
                 </div>
 
                 {s.is_booked ? (
-                  <div className="text-[11px] font-bold text-indigo-700 space-y-0.5">
-                    <div className="bg-indigo-100 text-indigo-700 inline-block px-2 py-0.5 rounded-full">
-                      예약됨 · {s.student_id} {s.student_name}
-                    </div>
-                    {s.booked_at && (
-                      <p className="text-slate-400 font-semibold">
-                        신청일시: {new Date(s.booked_at).toLocaleString("ko-KR")}
-                      </p>
-                    )}
-                  </div>
+                  s.booked_at && (
+                    <p className="text-[11px] text-slate-400 font-semibold">
+                      신청일시: {new Date(s.booked_at).toLocaleString("ko-KR")}
+                    </p>
+                  )
                 ) : (
                   <span className="text-[11px] font-bold text-slate-400 bg-slate-100 inline-block px-2 py-0.5 rounded-full w-fit">
                     신청 가능
@@ -219,6 +457,17 @@ export function StatusTab() {
       </div>
 
       <EditSlotModal slot={editingSlot} onClose={() => setEditingSlot(null)} onSaved={reload} />
+      <AddDateModal
+        open={addDateModalOpen}
+        onClose={() => setAddDateModalOpen(false)}
+        onAdd={handleAddDate}
+      />
+      <FavoritesSettingsModal
+        open={favoritesModalOpen}
+        onClose={() => setFavoritesModalOpen(false)}
+        favorites={favorites}
+        reload={reloadFavorites}
+      />
     </div>
   );
 }

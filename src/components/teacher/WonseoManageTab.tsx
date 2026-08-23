@@ -9,6 +9,7 @@ import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { useRoster } from "@/lib/hooks/useRoster";
 import { useStatusReveal } from "@/lib/hooks/useStatusReveal";
 import { useEqualHeights } from "@/lib/hooks/useEqualHeights";
+import { useActiveClass } from "@/components/providers/ActiveClassProvider";
 import { WonseoCardView } from "@/components/wonseo/WonseoCardView";
 import { WonseoCardModal } from "@/components/wonseo/WonseoCardModal";
 import { WonseoTableView } from "@/components/teacher/WonseoTableView";
@@ -22,6 +23,7 @@ export function WonseoManageTab() {
   const confirm = useConfirm();
   const { roster } = useRoster();
   const { enabled: statusVisible, toggle } = useStatusReveal();
+  const { isAdmin } = useActiveClass();
 
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [selectedStudentId, setSelectedStudentId] = useState("");
@@ -113,6 +115,7 @@ export function WonseoManageTab() {
   }
 
   async function handleToggleStatus() {
+    if (!isAdmin) return;
     const ok = await toggle();
     showToast(
       ok ? (statusVisible ? "합격 상태가 비공개로 전환되었습니다." : "합격 상태가 공개되었습니다.") : "변경에 실패했습니다.",
@@ -136,11 +139,15 @@ export function WonseoManageTab() {
           </div>
           <button
             onClick={handleToggleStatus}
+            disabled={!isAdmin}
+            title={isAdmin ? undefined : "전체관리자만 변경할 수 있습니다"}
             className={cn(
               "w-[168px] shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5",
-              statusVisible
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                : "bg-slate-200 hover:bg-slate-300 text-slate-700",
+              !isAdmin
+                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                : statusVisible
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  : "bg-slate-200 hover:bg-slate-300 text-slate-700",
             )}
           >
             {statusVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}

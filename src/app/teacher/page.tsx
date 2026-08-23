@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  CalendarPlus,
   GraduationCap,
   KeyRound,
   ListChecks,
@@ -15,8 +14,9 @@ import {
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ActiveClassProvider, useActiveClass } from "@/components/providers/ActiveClassProvider";
 import { AppearanceSettingsButtons } from "@/components/settings/AppearanceSettingsButtons";
+import { createClient } from "@/lib/supabase/client";
+import { useToast } from "@/components/providers/ToastProvider";
 import { Tabs } from "@/components/ui/Tabs";
-import { SlotCreateTab } from "@/components/teacher/SlotCreateTab";
 import { StatusTab } from "@/components/teacher/StatusTab";
 import { WonseoManageTab } from "@/components/teacher/WonseoManageTab";
 import { RosterTab } from "@/components/teacher/RosterTab";
@@ -24,7 +24,7 @@ import { TeacherManageTab } from "@/components/teacher/TeacherManageTab";
 import { ChangePasswordModal } from "@/components/teacher/ChangePasswordModal";
 import { formatClassLabel } from "@/lib/student-id";
 
-type TeacherTab = "create" | "status" | "wonseo" | "roster" | "teachers";
+type TeacherTab = "status" | "wonseo" | "roster" | "teachers";
 
 export default function TeacherPage() {
   const router = useRouter();
@@ -58,20 +58,37 @@ export default function TeacherPage() {
 
 function TeacherDashboard() {
   const router = useRouter();
-  const { profile, signOut } = useAuth();
+  const { profile, refreshProfile, signOut } = useAuth();
   const { grade, classNo, isAdmin, classOptions, setActiveClass, loading } = useActiveClass();
-  const [tab, setTab] = useState<TeacherTab>("create");
+  const [tab, setTab] = useState<TeacherTab>("status");
   const [pwModalOpen, setPwModalOpen] = useState(false);
+  const [togglingAdmin, setTogglingAdmin] = useState(false);
+  const showToast = useToast();
 
   const tabs = [
-    { key: "create", label: "슬롯 개설", icon: <CalendarPlus className="w-4 h-4" /> },
-    { key: "status", label: "학생 신청 현황", icon: <ListChecks className="w-4 h-4" /> },
+    { key: "status", label: "상담 신청 현황", icon: <ListChecks className="w-4 h-4" /> },
     { key: "wonseo", label: "수시 원서 관리", icon: <GraduationCap className="w-4 h-4" /> },
     { key: "roster", label: "학생 명단 관리", icon: <UsersRound className="w-4 h-4" /> },
     ...(isAdmin
       ? [{ key: "teachers", label: "교사 계정 관리", icon: <UserCog className="w-4 h-4" /> }]
       : []),
   ];
+
+  async function handleToggleAdminMode() {
+    if (!profile) return;
+    setTogglingAdmin(true);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("profiles")
+      .update({ admin_mode_enabled: !profile.admin_mode_enabled })
+      .eq("id", profile.id);
+    setTogglingAdmin(false);
+    if (error) {
+      showToast("관리자 모드 전환에 실패했습니다.", "error");
+      return;
+    }
+    await refreshProfile();
+  }
 
   return (
     <div className="max-w-5xl mx-auto w-full px-4 py-6 sm:py-10 flex-1 space-y-6">
@@ -95,6 +112,20 @@ function TeacherDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+          {profile?.dual_admin && (
+            <button
+              onClick={handleToggleAdminMode}
+              disabled={togglingAdmin}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition border flex items-center gap-1.5 disabled:opacity-60 ${
+                profile.admin_mode_enabled
+                  ? "bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-500"
+                  : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700"
+              }`}
+            >
+              <ShieldUser className="w-3.5 h-3.5" />
+              <span>관리자 모드 {profile.admin_mode_enabled ? "켜짐" : "꺼짐"}</span>
+            </button>
+          )}
           {isAdmin && (
             <select
               value={grade != null && classNo != null ? `${grade}-${classNo}` : ""}
@@ -148,7 +179,6 @@ function TeacherDashboard() {
         </div>
       ) : (
         <>
-          {tab === "create" && <SlotCreateTab />}
           {tab === "status" && <StatusTab />}
           {tab === "wonseo" && <WonseoManageTab />}
           {tab === "roster" && <RosterTab />}

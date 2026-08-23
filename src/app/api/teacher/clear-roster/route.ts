@@ -10,7 +10,7 @@ export async function POST(request: Request) {
 
   let grade: number;
   let classNo: number;
-  if (teacher.teacherRole === "admin") {
+  if (teacher.isAdmin) {
     const body = await request.json().catch(() => ({}));
     if (typeof body.grade !== "number" || typeof body.classNo !== "number") {
       return NextResponse.json({ error: "비울 반(학년/반)을 지정해 주세요." }, { status: 400 });

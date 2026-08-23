@@ -7,7 +7,7 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { useRoster } from "@/lib/hooks/useRoster";
 import { useActiveClass } from "@/components/providers/ActiveClassProvider";
-import { parseStudentId, formatClassLabel } from "@/lib/student-id";
+import { parseStudentId, parseRosterLine, formatClassLabel } from "@/lib/student-id";
 
 export function RosterTab() {
   const showToast = useToast();
@@ -24,18 +24,11 @@ export function RosterTab() {
       .filter(Boolean);
 
     const rows = lines
-      .map((line) => {
-        const parts = line.split(/\s+/);
-        if (parts.length < 2) return null;
-        const studentId = parts[0].trim();
-        const name = parts.slice(1).join(" ").trim();
-        if (!studentId || !name) return null;
-        return { student_id: studentId, name };
-      })
+      .map((line) => parseRosterLine(line))
       .filter((r): r is { student_id: string; name: string } => r !== null);
 
     if (rows.length === 0) {
-      showToast("'학번 이름' 형식으로 한 줄에 한 명씩 입력해 주세요.", "error");
+      showToast("학번(5자리)과 이름이 붙어있는 형식으로 한 줄에 한 명씩 입력해 주세요.", "error");
       return;
     }
 
