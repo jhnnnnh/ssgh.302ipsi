@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CalendarPlus,
   CalendarX,
@@ -111,6 +111,13 @@ export function StatusTab() {
     () => favorites.filter((f) => f.category === activeFavoriteCategory),
     [favorites, activeFavoriteCategory],
   );
+
+  // 날짜를 바꾸면 그 날짜의 요일에 맞는 즐겨찾기로 다시 자동 전환한다.
+  // (직접 고른 평일/휴일 선택은 같은 날짜를 보는 동안에만 유지된다.)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFavoriteOverride(null);
+  }, [activeDate]);
 
   function handleStartChange(value: string) {
     const formatted = autoFormatTime(value);
@@ -338,17 +345,16 @@ export function StatusTab() {
               <div className="flex items-center bg-white border border-amber-200 rounded-xl p-0.5 text-[11px] font-bold">
                 {(
                   [
-                    { key: null, label: "자동" },
                     { key: "weekday", label: "평일" },
                     { key: "weekend", label: "휴일" },
                   ] as const
                 ).map((opt) => (
                   <button
-                    key={opt.label}
+                    key={opt.key}
                     onClick={() => setFavoriteOverride(opt.key)}
                     className={cn(
                       "px-2.5 py-1 rounded-lg transition",
-                      favoriteOverride === opt.key
+                      activeFavoriteCategory === opt.key
                         ? "bg-amber-500 text-white"
                         : "text-slate-500 hover:text-slate-700",
                     )}
