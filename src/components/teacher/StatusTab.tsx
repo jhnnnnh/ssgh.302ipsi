@@ -67,6 +67,7 @@ export function StatusTab() {
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [endTouched, setEndTouched] = useState(false);
+  const [favoriteOverride, setFavoriteOverride] = useState<"weekday" | "weekend" | null>(null);
 
   const allDates = useMemo(
     () => Array.from(new Set([...slots.map((s) => s.date), ...extraDates])).sort(),
@@ -104,7 +105,8 @@ export function StatusTab() {
     daySlots.length,
   );
 
-  const activeFavoriteCategory = activeDate ? (isWeekendDate(activeDate) ? "weekend" : "weekday") : "weekday";
+  const autoFavoriteCategory = activeDate ? (isWeekendDate(activeDate) ? "weekend" : "weekday") : "weekday";
+  const activeFavoriteCategory = favoriteOverride ?? autoFavoriteCategory;
   const visibleFavorites = useMemo(
     () => favorites.filter((f) => f.category === activeFavoriteCategory),
     [favorites, activeFavoriteCategory],
@@ -267,32 +269,18 @@ export function StatusTab() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden space-y-4 p-5">
-        <div className="border-b border-slate-100 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="border-b border-slate-100 pb-4">
           <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
             <ListChecks className="w-4 h-4 text-indigo-600" />
             <span>상담 슬롯 및 신청 현황</span>
           </h3>
-          <div className="flex items-center gap-2 self-end sm:self-auto">
-            <button
-              onClick={deleteSelected}
-              className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>선택 삭제</span>
-            </button>
-            <button
-              onClick={exportCsv}
-              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
-            >
-              <FileDown className="w-3.5 h-3.5" />
-              <span>엑셀 일괄 다운로드</span>
-            </button>
-          </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+        <div className="space-y-2">
+          <div className="overflow-x-auto pb-1 -mx-1 px-1">
             <DateTabs dates={visibleDates} selected={activeDate} onSelect={setSelectedDate} />
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setAddDateModalOpen(true)}
               className="shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold border transition whitespace-nowrap bg-white text-slate-600 border-slate-200 hover:bg-slate-50 flex items-center gap-1.5"
@@ -313,14 +301,6 @@ export function StatusTab() {
               <span>지난 날짜 보기</span>
             </button>
           </div>
-          {daySlots.length > 0 && (
-            <button
-              onClick={() => toggleCheckAll(!allChecked)}
-              className="text-[11px] font-bold text-slate-500 hover:text-indigo-600 underline shrink-0 self-start sm:self-auto"
-            >
-              {allChecked ? "전체 선택 해제" : "전체 선택"}
-            </button>
-          )}
         </div>
 
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
@@ -349,18 +329,42 @@ export function StatusTab() {
         </div>
 
         <div className="bg-amber-50/60 border border-amber-200/70 rounded-2xl p-4 space-y-2.5">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <span className="text-xs font-bold text-amber-800 flex items-center gap-1.5">
               <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
               <span>{activeFavoriteCategory === "weekend" ? "휴일 즐겨찾기" : "평일 즐겨찾기"}</span>
             </span>
-            <button
-              onClick={() => setFavoritesModalOpen(true)}
-              className="text-[11px] font-bold text-slate-500 hover:text-indigo-600 underline flex items-center gap-1 shrink-0"
-            >
-              <Settings className="w-3 h-3" />
-              <span>설정</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center bg-white border border-amber-200 rounded-xl p-0.5 text-[11px] font-bold">
+                {(
+                  [
+                    { key: null, label: "자동" },
+                    { key: "weekday", label: "평일" },
+                    { key: "weekend", label: "휴일" },
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    key={opt.label}
+                    onClick={() => setFavoriteOverride(opt.key)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg transition",
+                      favoriteOverride === opt.key
+                        ? "bg-amber-500 text-white"
+                        : "text-slate-500 hover:text-slate-700",
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setFavoritesModalOpen(true)}
+                className="text-[11px] font-bold text-slate-500 hover:text-indigo-600 underline flex items-center gap-1 shrink-0"
+              >
+                <Settings className="w-3 h-3" />
+                <span>설정</span>
+              </button>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {visibleFavorites.length === 0 && (
@@ -380,6 +384,31 @@ export function StatusTab() {
             ))}
           </div>
         </div>
+
+        {daySlots.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap pt-1">
+            <button
+              onClick={() => toggleCheckAll(!allChecked)}
+              className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+            >
+              <span>{allChecked ? "전체 선택 해제" : "전체 선택"}</span>
+            </button>
+            <button
+              onClick={deleteSelected}
+              className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>선택 삭제</span>
+            </button>
+            <button
+              onClick={exportCsv}
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+            >
+              <FileDown className="w-3.5 h-3.5" />
+              <span>엑셀 일괄 다운로드</span>
+            </button>
+          </div>
+        )}
 
         {daySlots.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 pt-2">
