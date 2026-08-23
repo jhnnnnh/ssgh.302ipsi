@@ -37,11 +37,10 @@ import {
 } from "@/lib/time";
 import type { CounselingSlot } from "@/lib/database.types";
 
-const FIELD_CLASS =
-  "w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500";
-const BUTTON_CLASS =
-  "px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center justify-center gap-2";
-const LABEL_CLASS = "block text-xs font-bold text-slate-600 mb-1";
+const COMPACT_FIELD_CLASS =
+  "w-20 bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-mono font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500";
+const COMPACT_BUTTON_CLASS =
+  "px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition shadow-xs flex items-center gap-1.5";
 
 function findOverlap(existing: CounselingSlot[], date: string, start: string, end: string) {
   return existing.find(
@@ -310,84 +309,83 @@ export function StatusTab() {
           </div>
         </div>
 
-        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
-          <div>
-            <label className={LABEL_CLASS}>시작 시간</label>
+        <div className="bg-amber-50/60 border border-amber-200/70 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center gap-2 flex-wrap">
             <input
               value={start}
               onChange={(e) => handleStartChange(e.target.value)}
               placeholder="13:00"
-              className={`${FIELD_CLASS} font-mono`}
+              className={COMPACT_FIELD_CLASS}
             />
-          </div>
-          <div>
-            <label className={LABEL_CLASS}>종료 시간</label>
+            <span className="text-slate-400 text-xs font-bold">~</span>
             <input
               value={end}
               onChange={(e) => handleEndChange(e.target.value)}
               placeholder="13:30"
-              className={`${FIELD_CLASS} font-mono`}
+              className={COMPACT_FIELD_CLASS}
             />
+            <button onClick={createNewSlot} className={COMPACT_BUTTON_CLASS}>
+              <SquarePlus className="w-3.5 h-3.5" />
+              <span>직접 추가</span>
+            </button>
           </div>
-          <button onClick={createNewSlot} className={`${BUTTON_CLASS} sm:col-span-2`}>
-            <SquarePlus className="w-3.5 h-3.5" />
-            <span>슬롯 추가</span>
-          </button>
-        </div>
 
-        <div className="bg-amber-50/60 border border-amber-200/70 rounded-2xl p-4 space-y-2.5">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <span className="text-xs font-bold text-amber-800 flex items-center gap-1.5">
-              <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-              <span>{activeFavoriteCategory === "weekend" ? "휴일 즐겨찾기" : "평일 즐겨찾기"}</span>
-            </span>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center bg-white border border-amber-200 rounded-xl p-0.5 text-[11px] font-bold">
-                {(
-                  [
-                    { key: "weekday", label: "평일" },
-                    { key: "weekend", label: "휴일" },
-                  ] as const
-                ).map((opt) => (
-                  <button
-                    key={opt.key}
-                    onClick={() => setFavoriteOverride(opt.key)}
-                    className={cn(
-                      "px-2.5 py-1 rounded-lg transition",
-                      activeFavoriteCategory === opt.key
-                        ? "bg-amber-500 text-white"
-                        : "text-slate-500 hover:text-slate-700",
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+          <div className="border-t border-dashed border-amber-300" />
+
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-xs font-bold text-amber-800 flex items-center gap-1.5">
+                <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+                <span>즐겨찾기</span>
+              </span>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center bg-white border border-amber-200 rounded-xl p-0.5 text-[11px] font-bold">
+                  {(
+                    [
+                      { key: "weekday", label: "평일" },
+                      { key: "weekend", label: "휴일" },
+                    ] as const
+                  ).map((opt) => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setFavoriteOverride(opt.key)}
+                      className={cn(
+                        "px-2.5 py-1 rounded-lg transition",
+                        activeFavoriteCategory === opt.key
+                          ? "bg-amber-500 text-white"
+                          : "text-slate-500 hover:text-slate-700",
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setFavoritesModalOpen(true)}
+                  className="text-[11px] font-bold text-slate-500 hover:text-indigo-600 underline flex items-center gap-1 shrink-0"
+                >
+                  <Settings className="w-3 h-3" />
+                  <span>설정</span>
+                </button>
               </div>
-              <button
-                onClick={() => setFavoritesModalOpen(true)}
-                className="text-[11px] font-bold text-slate-500 hover:text-indigo-600 underline flex items-center gap-1 shrink-0"
-              >
-                <Settings className="w-3 h-3" />
-                <span>설정</span>
-              </button>
             </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {visibleFavorites.length === 0 && (
-              <p className="text-[11px] text-slate-400">
-                등록된 즐겨찾기가 없습니다. &ldquo;설정&rdquo;에서 추가해 보세요.
-              </p>
-            )}
-            {visibleFavorites.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => addSingleFavorite(f)}
-                title="클릭하면 이 시간대로 슬롯이 바로 추가됩니다"
-                className="shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold border transition whitespace-nowrap bg-white text-slate-700 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50"
-              >
-                {formatTime(f.start_time)}~{formatTime(f.end_time)}
-              </button>
-            ))}
+            <div className="flex flex-wrap items-center gap-2">
+              {visibleFavorites.length === 0 && (
+                <p className="text-[11px] text-slate-400">
+                  등록된 즐겨찾기가 없습니다. &ldquo;설정&rdquo;에서 추가해 보세요.
+                </p>
+              )}
+              {visibleFavorites.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => addSingleFavorite(f)}
+                  title="클릭하면 이 시간대로 슬롯이 바로 추가됩니다"
+                  className="shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold border transition whitespace-nowrap bg-white text-slate-700 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50"
+                >
+                  {formatTime(f.start_time)}~{formatTime(f.end_time)}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
