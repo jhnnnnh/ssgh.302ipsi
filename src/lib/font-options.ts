@@ -27,18 +27,18 @@ export const FONT_OPTIONS: FontOption[] = [
     cssFamily: "'Pretendard', system-ui, sans-serif",
     sizeAdjust: 1,
   },
-  { key: "song-myung", label: "Song Myung", cssFamily: "'Song Myung', serif", sizeAdjust: 1 },
+  { key: "song-myung", label: "Song Myung", cssFamily: "'Song Myung', serif", sizeAdjust: 1.02 },
   {
     key: "gowun-batang",
     label: "고운바탕 (Gowun Batang)",
     cssFamily: "'Gowun Batang', serif",
-    sizeAdjust: 0.97,
+    sizeAdjust: 0.98,
   },
   {
     key: "gowun-dodum",
     label: "고운돋움 (Gowun Dodum)",
     cssFamily: "'Gowun Dodum', sans-serif",
-    sizeAdjust: 0.98,
+    sizeAdjust: 0.99,
   },
   {
     key: "cafe24-anemone",
@@ -50,21 +50,21 @@ export const FONT_OPTIONS: FontOption[] = [
     key: "nanum-pen-script",
     label: "나눔손글씨 펜체 (Nanum Pen Script)",
     cssFamily: "'Nanum Pen Script', cursive",
-    sizeAdjust: 1.41,
+    sizeAdjust: 1.3,
   },
-  { key: "gaegu", label: "Gaegu", cssFamily: "'Gaegu', cursive", sizeAdjust: 1.37 },
+  { key: "gaegu", label: "Gaegu", cssFamily: "'Gaegu', cursive", sizeAdjust: 1.06 },
   {
     key: "gmarket-sans",
     label: "Gmarket Sans",
     cssFamily: "'GMarketSans', sans-serif",
-    sizeAdjust: 0.96,
+    sizeAdjust: 0.95,
   },
-  { key: "do-hyeon", label: "Do Hyeon", cssFamily: "'Do Hyeon', sans-serif", sizeAdjust: 1.14 },
+  { key: "do-hyeon", label: "Do Hyeon", cssFamily: "'Do Hyeon', sans-serif", sizeAdjust: 1.09 },
   {
     key: "jua",
     label: "배민 주아체 (Jua)",
     cssFamily: "'Jua', sans-serif",
-    sizeAdjust: 1.06,
+    sizeAdjust: 1.02,
   },
 ];
 

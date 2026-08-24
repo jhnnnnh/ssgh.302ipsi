@@ -26,9 +26,9 @@ export function AppearanceSettingsModal({
   const [selectedFont, setSelectedFont] = useState(currentFontKey ?? DEFAULT_FONT_KEY);
   const [saving, setSaving] = useState(false);
 
-  async function handleSave(hex: string | null) {
+  async function handleSave(hex: string | null, fontKey: string = selectedFont) {
     setSaving(true);
-    await onSave(hex, selectedFont === DEFAULT_FONT_KEY ? null : selectedFont);
+    await onSave(hex, fontKey === DEFAULT_FONT_KEY ? null : fontKey);
     setSaving(false);
     onClose();
   }
@@ -36,7 +36,7 @@ export function AppearanceSettingsModal({
   function handleReset() {
     setColor(DEFAULT_SWATCH);
     setSelectedFont(DEFAULT_FONT_KEY);
-    handleSave(null);
+    handleSave(null, DEFAULT_FONT_KEY);
   }
 
   return (
