@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { KeyRound, Trash2, UserPlus, Users, X } from "lucide-react";
+import { KeyRound, Trash2, UserPlus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
@@ -182,15 +182,9 @@ export function RosterTab() {
     <div className="space-y-6">
       <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
         <div className="p-6 pb-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-              <Users className="w-4 h-4 text-indigo-600" />
-              <span>등록된 학생 명단</span>
-            </h3>
-            <span className="text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full">
-              총 {roster.length}명 등록됨
-            </span>
-          </div>
+          <span className="text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full">
+            총 {roster.length}명 등록됨
+          </span>
           <div className="flex items-center gap-2">
             {selectMode ? (
               <>

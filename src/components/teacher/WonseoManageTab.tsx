@@ -178,12 +178,8 @@ export function WonseoManageTab() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-5">
-        <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-            <GraduationCap className="w-4 h-4 text-indigo-600" />
-            <span>학생 수시 원서 지도 및 관리</span>
-          </h3>
-          {isAdmin && (
+        {isAdmin && (
+          <div className="flex justify-end border-b border-slate-100 pb-4">
             <button
               onClick={handleToggleStatus}
               className={cn(
@@ -196,8 +192,8 @@ export function WonseoManageTab() {
               {statusVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
               <span>합격 상태</span>
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="flex items-center gap-2">
           <button

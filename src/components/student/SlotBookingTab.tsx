@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarX, CircleCheck, Clock, X } from "lucide-react";
+import { CalendarX, CircleCheck, Clock, History, X } from "lucide-react";
 import { useCounselingSlots } from "@/lib/hooks/useCounselingSlots";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { DateTabs } from "@/components/ui/DateTabs";
-import { formatDateFull, formatTime } from "@/lib/time";
+import { formatDateFull, formatTime, todayDateString } from "@/lib/time";
 import { cn } from "@/lib/cn";
 
 export function SlotBookingTab({ studentId }: { studentId: string }) {
@@ -15,13 +15,20 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
   const showToast = useToast();
   const confirm = useConfirm();
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [showPastDates, setShowPastDates] = useState(false);
 
   const dates = useMemo(
     () => Array.from(new Set(slots.map((s) => s.date))).sort(),
     [slots],
   );
+  const today = todayDateString();
+  const visibleDates = useMemo(
+    () => (showPastDates ? dates : dates.filter((d) => d >= today)),
+    [dates, showPastDates, today],
+  );
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const activeDate = selectedDate ?? dates[0] ?? null;
+  const activeDate = selectedDate ?? visibleDates[0] ?? null;
+  const isPastDate = activeDate != null && activeDate < today;
 
   const daySlots = useMemo(
     () =>
@@ -111,7 +118,23 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
           </p>
         </div>
 
-        <DateTabs dates={dates} selected={activeDate} onSelect={setSelectedDate} />
+        <div className="space-y-2">
+          <div className="overflow-x-auto pb-1 -mx-1 px-1">
+            <DateTabs dates={visibleDates} selected={activeDate} onSelect={setSelectedDate} />
+          </div>
+          <button
+            onClick={() => setShowPastDates((v) => !v)}
+            className={cn(
+              "shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold border transition whitespace-nowrap flex items-center gap-1.5",
+              showPastDates
+                ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50",
+            )}
+          >
+            <History className="w-3.5 h-3.5" />
+            <span>지난 날짜 보기</span>
+          </button>
+        </div>
 
         {!loading && daySlots.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 pt-2">
@@ -137,29 +160,39 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
                     {formatTime(slot.start_time)} ~ {formatTime(slot.end_time)}
                   </div>
 
-                  {isMine && (
-                    <button
-                      onClick={() => handleCancel(slot.id)}
-                      disabled={busyId === slot.id}
-                      className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
-                    >
-                      취소하기
-                    </button>
-                  )}
+                  {isMine &&
+                    (isPastDate ? (
+                      <span className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-indigo-100 text-indigo-500 rounded-xl text-xs font-bold text-center">
+                        신청 완료
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleCancel(slot.id)}
+                        disabled={busyId === slot.id}
+                        className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
+                      >
+                        취소하기
+                      </button>
+                    ))}
                   {isTaken && (
                     <span className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-slate-200 text-slate-500 rounded-xl text-xs font-bold text-center">
                       마감
                     </span>
                   )}
-                  {!slot.is_booked && (
-                    <button
-                      onClick={() => handleBook(slot.id)}
-                      disabled={busyId === slot.id}
-                      className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
-                    >
-                      신청
-                    </button>
-                  )}
+                  {!slot.is_booked &&
+                    (isPastDate ? (
+                      <span className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-slate-100 text-slate-400 rounded-xl text-xs font-bold text-center">
+                        지난 일정
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleBook(slot.id)}
+                        disabled={busyId === slot.id}
+                        className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
+                      >
+                        신청
+                      </button>
+                    ))}
                 </div>
               );
             })}

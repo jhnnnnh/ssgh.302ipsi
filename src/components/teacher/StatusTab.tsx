@@ -6,7 +6,6 @@ import {
   CalendarX,
   FileDown,
   History,
-  ListChecks,
   Pencil,
   Settings,
   SquarePlus,
@@ -275,13 +274,6 @@ export function StatusTab() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden space-y-4 p-6">
-        <div className="border-b border-slate-100 pb-4">
-          <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-            <ListChecks className="w-4 h-4 text-indigo-600" />
-            <span>상담 슬롯 및 신청 현황</span>
-          </h3>
-        </div>
-
         <div className="space-y-2">
           <div className="overflow-x-auto pb-1 -mx-1 px-1">
             <DateTabs dates={visibleDates} selected={activeDate} onSelect={setSelectedDate} />
