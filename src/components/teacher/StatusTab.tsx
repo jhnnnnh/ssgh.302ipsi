@@ -281,7 +281,7 @@ export function StatusTab() {
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setAddDateModalOpen(true)}
-              className="shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold border transition whitespace-nowrap bg-white text-slate-600 border-slate-200 hover:bg-slate-50 flex items-center gap-1.5"
+              className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition whitespace-nowrap bg-white text-slate-600 border-slate-200 hover:bg-slate-50 flex items-center gap-1.5"
             >
               <CalendarPlus className="w-3.5 h-3.5" />
               <span>날짜 추가</span>
@@ -289,7 +289,7 @@ export function StatusTab() {
             <button
               onClick={() => setShowPastDates((v) => !v)}
               className={cn(
-                "shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold border transition whitespace-nowrap flex items-center gap-1.5",
+                "shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition whitespace-nowrap flex items-center gap-1.5",
                 showPastDates
                   ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
                   : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50",
@@ -385,20 +385,20 @@ export function StatusTab() {
           <div className="flex items-center gap-2 flex-wrap pt-1">
             <button
               onClick={() => toggleCheckAll(!allChecked)}
-              className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+              className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-sm font-bold transition flex items-center gap-1.5"
             >
               <span>{allChecked ? "전체 선택 해제" : "전체 선택"}</span>
             </button>
             <button
               onClick={deleteSelected}
-              className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+              className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-sm font-bold transition flex items-center gap-1.5"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>선택 삭제</span>
             </button>
             <button
               onClick={exportCsv}
-              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold transition flex items-center gap-1.5 shadow-xs"
             >
               <FileDown className="w-3.5 h-3.5" />
               <span>엑셀 일괄 다운로드</span>
@@ -428,7 +428,7 @@ export function StatusTab() {
                       onChange={() => toggleCheck(s.id)}
                       className="rounded text-indigo-600 focus:ring-indigo-500"
                     />
-                    <span className="text-sm font-black text-slate-900">
+                    <span className="text-lg font-bold text-slate-900">
                       {formatTime(s.start_time)} ~ {formatTime(s.end_time)}
                     </span>
                     {s.is_booked && (

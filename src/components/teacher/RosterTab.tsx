@@ -190,21 +190,21 @@ export function RosterTab() {
               <>
                 <button
                   onClick={toggleSelectAll}
-                  className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold transition"
+                  className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-sm font-bold transition"
                 >
                   {allSelected ? "전체 해제" : "전체 선택"}
                 </button>
                 <button
                   onClick={handleBulkRemove}
                   disabled={bulkBusy}
-                  className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-60"
+                  className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-bold transition flex items-center gap-1.5 disabled:opacity-60"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>선택 삭제 ({selectedIds.size})</span>
                 </button>
                 <button
                   onClick={toggleSelectMode}
-                  className="px-3 py-2 text-slate-400 hover:text-slate-600 rounded-xl text-xs font-bold transition flex items-center gap-1"
+                  className="px-3.5 py-2 text-slate-400 hover:text-slate-600 rounded-xl text-sm font-bold transition flex items-center gap-1"
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>취소</span>
@@ -214,14 +214,14 @@ export function RosterTab() {
               <>
                 <button
                   onClick={() => setAddModalOpen(true)}
-                  className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5"
+                  className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition shadow-xs flex items-center gap-1.5"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
                   <span>명단 추가</span>
                 </button>
                 <button
                   onClick={toggleSelectMode}
-                  className="px-3.5 py-2 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                  className="px-3.5 py-2 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-xl text-sm font-bold transition flex items-center gap-1.5"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>명단 삭제</span>

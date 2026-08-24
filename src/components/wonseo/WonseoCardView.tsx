@@ -106,7 +106,7 @@ export const WonseoCardView = forwardRef<
         )}
       </div>
 
-      <div className="text-xs space-y-1 border-t border-slate-100 pt-3">
+      <div className="text-[13px] space-y-1 border-t border-slate-100 pt-3">
         {methodValue && <InfoRow label="전형방법" value={methodValue} />}
         {(card.calculated_grade || card.min_standard) && (
           <div className="flex flex-wrap gap-x-4">

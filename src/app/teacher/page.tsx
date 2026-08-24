@@ -92,15 +92,15 @@ function TeacherDashboard() {
 
   return (
     <div className="max-w-5xl mx-auto w-full px-4 py-6 sm:py-10 flex-1 space-y-6">
-      <div className="bg-white rounded-3xl p-5 shadow-sm border border-indigo-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-indigo-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center">
             <ShieldUser className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <span>{profile?.name} 선생님</span>
-              <span className="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold px-2 py-0.5 rounded-full">
+              <span className="text-[11px] bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold px-2 py-0.5 rounded-full">
                 {isAdmin ? "전체관리자" : "담임교사"}
               </span>
             </h2>
@@ -116,7 +116,7 @@ function TeacherDashboard() {
             <button
               onClick={handleToggleAdminMode}
               disabled={togglingAdmin}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition border flex items-center gap-1.5 disabled:opacity-60 ${
+              className={`px-3.5 py-2 rounded-xl text-sm font-bold transition border flex items-center gap-1.5 disabled:opacity-60 ${
                 profile.admin_mode_enabled
                   ? "bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600"
                   : "bg-white hover:bg-slate-50 text-slate-600 border-slate-200"
@@ -133,7 +133,7 @@ function TeacherDashboard() {
                 const [g, c] = e.target.value.split("-").map(Number);
                 setActiveClass(g, c);
               }}
-              className="bg-white border border-slate-300 text-slate-800 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="bg-white border border-slate-300 text-slate-800 text-sm font-bold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               {classOptions.length === 0 && <option value="">등록된 반 없음</option>}
               {classOptions.map((c) => (

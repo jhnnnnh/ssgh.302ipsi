@@ -183,7 +183,7 @@ export function WonseoManageTab() {
             <button
               onClick={handleToggleStatus}
               className={cn(
-                "w-[168px] shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5",
+                "w-[168px] shrink-0 px-3.5 py-2 rounded-xl text-sm font-bold transition flex items-center justify-center gap-1.5",
                 statusVisible
                   ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                   : "bg-slate-200 hover:bg-slate-300 text-slate-700",
@@ -199,7 +199,7 @@ export function WonseoManageTab() {
           <button
             onClick={() => setViewMode("cards")}
             className={cn(
-              "px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5",
+              "px-3.5 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1.5",
               viewMode === "cards"
                 ? "bg-indigo-600 text-white"
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200",
@@ -211,7 +211,7 @@ export function WonseoManageTab() {
           <button
             onClick={() => setViewMode("table")}
             className={cn(
-              "px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5",
+              "px-3.5 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1.5",
               viewMode === "table"
                 ? "bg-indigo-600 text-white"
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200",
@@ -243,7 +243,7 @@ export function WonseoManageTab() {
               {selectedStudentId && (
                 <button
                   onClick={openCreate}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-2xs flex items-center gap-1.5 shrink-0"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition shadow-2xs flex items-center gap-1.5 shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>수시 원서 추가</span>
@@ -314,7 +314,7 @@ export function WonseoManageTab() {
               <button
                 onClick={handleExportExcel}
                 disabled={exporting}
-                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-60"
+                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold transition flex items-center gap-1.5 disabled:opacity-60"
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" />
                 <span>{exporting ? "생성 중..." : "엑셀 일괄 다운로드"}</span>

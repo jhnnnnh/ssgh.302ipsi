@@ -103,7 +103,7 @@ export default function HomePage() {
             priority
             className="w-8 h-8 sm:w-9 sm:h-9 shrink-0"
           />
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">
             삼성여고 2026 입시
           </h1>
         </div>
