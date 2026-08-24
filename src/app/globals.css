@@ -33,33 +33,130 @@ html {
   --font-sans: var(--font-sans);
 }
 
-/* 학생이 고를 수 있는 웹폰트 중 구글 폰트에 없는 것들 (직접 @font-face 등록) */
+/* 학생이 고를 수 있는 웹폰트 중 구글 폰트가 아닌 것들을 전부 자체 호스팅으로 등록한다.
+   파일은 /public/fonts/{영문명}/ 아래에 있다. */
 @font-face {
-  font-family: "Cafe24Anemone";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/Cafe24Ohsquare.woff")
-    format("woff");
-  font-weight: normal;
+  font-family: "Pretendard";
+  src: url("/fonts/Pretendard/Pretendard-Regular.woff2") format("woff2");
+  font-weight: 400;
   font-display: swap;
 }
 @font-face {
-  font-family: "GMarketSans";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansLight.woff")
-    format("woff");
+  font-family: "Pretendard";
+  src: url("/fonts/Pretendard/Pretendard-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("/fonts/Pretendard/Pretendard-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pretendard";
+  src: url("/fonts/Pretendard/Pretendard-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SCDream";
+  src: url("/fonts/SCDream/SCDream-Regular.woff") format("woff");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "SCDream";
+  src: url("/fonts/SCDream/SCDream-ExtraBold.woff") format("woff");
+  font-weight: 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "NanumSquare";
+  src: url("/fonts/NanumSquare/NanumSquareR.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "NanumSquare";
+  src: url("/fonts/NanumSquare/NanumSquareB.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JoseonGungseo";
+  src: url("/fonts/JoseonGungseo/ChosunGs.woff") format("woff");
+  font-weight: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SDUnicefDodam";
+  src: url("/fonts/SDUnicefDodam/SDUnicefDodam-Regular.woff2") format("woff2");
+  font-weight: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GyeonggiCheonnyeonBatang";
+  src: url("/fonts/GyeonggiCheonnyeonBatang/Batang-Regular.woff") format("woff");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "GyeonggiCheonnyeonBatang";
+  src: url("/fonts/GyeonggiCheonnyeonBatang/Batang-Bold.woff") format("woff");
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "LeeSeoyoon";
+  src: url("/fonts/LeeSeoyoon/LeeSeoyun.woff") format("woff");
+  font-weight: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Moneygraphy";
+  src: url("/fonts/Moneygraphy/Moneygraphy-Regular.woff2") format("woff2");
+  font-weight: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GmarketSans";
+  src: url("/fonts/GmarketSans/GmarketSansLight.woff") format("woff");
   font-weight: 300;
   font-display: swap;
 }
 @font-face {
-  font-family: "GMarketSans";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff")
-    format("woff");
+  font-family: "GmarketSans";
+  src: url("/fonts/GmarketSans/GmarketSansMedium.woff") format("woff");
   font-weight: 500;
   font-display: swap;
 }
 @font-face {
-  font-family: "GMarketSans";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff")
-    format("woff");
+  font-family: "GmarketSans";
+  src: url("/fonts/GmarketSans/GmarketSansBold.woff") format("woff");
   font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "BMDoHyeon";
+  src: url("/fonts/BMDoHyeon/BMDoHyeon.woff2") format("woff2");
+  font-weight: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "OKDDGothic";
+  src: url("/fonts/OKDDGothic/OkDanDan.woff2") format("woff2");
+  font-weight: normal;
   font-display: swap;
 }
 
