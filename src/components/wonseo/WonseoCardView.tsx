@@ -53,15 +53,15 @@ export const WonseoCardView = forwardRef<
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           {dragHandle}
-          <span className="text-xs font-black text-slate-900">{card.rank || "지망 미지정"}</span>
+          <span className="text-[11px] font-bold text-slate-900">{card.rank || "지망 미지정"}</span>
           <span
-            className={`text-[11px] font-black px-2.5 py-1 rounded-lg ${emphasis.badge}`}
+            className={`text-[11px] font-bold px-2.5 py-1 rounded-lg ${emphasis.badge}`}
           >
             {card.level}
           </span>
           {showStatus && (
             <span
-              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${STATUS_BADGE_STYLE[card.status]}`}
+              className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${STATUS_BADGE_STYLE[card.status]}`}
             >
               {statusLabel}
             </span>
@@ -85,17 +85,17 @@ export const WonseoCardView = forwardRef<
 
       <div className="flex items-baseline gap-2 min-w-0">
         <h4
-          className="text-base font-black text-slate-900 truncate shrink-0"
+          className="text-lg font-bold text-slate-900 truncate shrink-0"
           style={{ maxWidth: "58%" }}
         >
           {card.university}
         </h4>
-        <span className="text-[15px] font-bold text-slate-900 truncate min-w-0">
+        <span className="text-lg font-bold text-slate-900 truncate min-w-0">
           {card.department}
         </span>
       </div>
 
-      <div className="flex flex-wrap gap-1.5 text-[11px] font-bold">
+      <div className="flex flex-wrap gap-1.5 text-xs font-bold">
         <span className="border border-slate-300 text-slate-700 px-2 py-1 rounded-lg">
           {card.category}
         </span>

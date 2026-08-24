@@ -80,7 +80,7 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
     <div className="space-y-6">
       {myReservations.length > 0 && (
         <div className="bg-white border-2 border-indigo-500/80 rounded-3xl p-5 shadow-xs">
-          <h3 className="text-xs font-bold text-indigo-900 mb-3 flex items-center gap-2">
+          <h3 className="text-lg font-bold text-indigo-900 mb-3 flex items-center gap-2">
             <CircleCheck className="w-4 h-4 text-indigo-600" />
             <span>내가 신청한 상담 내역</span>
           </h3>
@@ -96,7 +96,7 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
                 <button
                   onClick={() => handleCancel(r.id)}
                   disabled={busyId === r.id}
-                  className="text-[11px] font-bold text-rose-600 hover:underline disabled:opacity-50 flex items-center gap-1"
+                  className="text-sm font-bold text-rose-600 hover:underline disabled:opacity-50 flex items-center gap-1"
                 >
                   <X className="w-3 h-3" />
                   취소
@@ -109,7 +109,7 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
 
       <div className="bg-white rounded-3xl p-6 shadow-sm border border-indigo-200 space-y-4">
         <div className="border-b border-slate-100 pb-4">
-          <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+          <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
             <Clock className="w-4 h-4 text-indigo-600" />
             <span>상담 가능 시간 슬롯</span>
           </h3>
@@ -125,7 +125,7 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
           <button
             onClick={() => setShowPastDates((v) => !v)}
             className={cn(
-              "shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold border transition whitespace-nowrap flex items-center gap-1.5",
+              "shrink-0 px-3.5 py-2 rounded-xl text-sm font-bold border transition whitespace-nowrap flex items-center gap-1.5",
               showPastDates
                 ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
                 : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50",
@@ -153,7 +153,7 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
                 >
                   <div
                     className={cn(
-                      "text-sm font-black",
+                      "text-lg font-bold",
                       isTaken ? "text-slate-400" : "text-slate-900",
                     )}
                   >
@@ -162,33 +162,33 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
 
                   {isMine &&
                     (isPastDate ? (
-                      <span className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-indigo-100 text-indigo-500 rounded-xl text-xs font-bold text-center">
+                      <span className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-indigo-100 text-indigo-500 rounded-xl text-sm font-bold text-center">
                         신청 완료
                       </span>
                     ) : (
                       <button
                         onClick={() => handleCancel(slot.id)}
                         disabled={busyId === slot.id}
-                        className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
+                        className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-bold transition disabled:opacity-60"
                       >
                         취소하기
                       </button>
                     ))}
                   {isTaken && (
-                    <span className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-slate-200 text-slate-500 rounded-xl text-xs font-bold text-center">
+                    <span className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-slate-200 text-slate-500 rounded-xl text-sm font-bold text-center">
                       마감
                     </span>
                   )}
                   {!slot.is_booked &&
                     (isPastDate ? (
-                      <span className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-slate-100 text-slate-400 rounded-xl text-xs font-bold text-center">
+                      <span className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-slate-100 text-slate-400 rounded-xl text-sm font-bold text-center">
                         지난 일정
                       </span>
                     ) : (
                       <button
                         onClick={() => handleBook(slot.id)}
                         disabled={busyId === slot.id}
-                        className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
+                        className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition disabled:opacity-60"
                       >
                         신청
                       </button>

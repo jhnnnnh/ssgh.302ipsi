@@ -15,7 +15,7 @@ export function ProfileBar({
   return (
     <div className="bg-white rounded-3xl p-5 shadow-sm border border-indigo-200 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <span className="text-sm font-black tracking-tight text-slate-900">
+        <span className="text-lg font-bold tracking-tight text-slate-900">
           {studentId} {name}
         </span>
       </div>

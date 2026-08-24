@@ -25,7 +25,7 @@ export function emptyResultYear(year: string): RecentResultYear {
 export function RecentResultsTable({ years }: { years: RecentResultYear[] }) {
   if (years.length === 0) {
     return (
-      <p className="text-[11px] text-slate-400 text-center py-3">
+      <p className="text-xs text-slate-400 text-center py-3">
         등록된 입결 정보가 없습니다.
       </p>
     );
@@ -33,7 +33,7 @@ export function RecentResultsTable({ years }: { years: RecentResultYear[] }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="text-[11px] border-collapse w-full">
+      <table className="text-xs border-collapse w-full">
         <thead>
           <tr>
             <th className="text-left p-1.5 sticky left-0 bg-white" />
