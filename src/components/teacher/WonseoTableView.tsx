@@ -21,15 +21,14 @@ export function WonseoTableView({ roster, cards }: { roster: Roster[]; cards: Wo
       <table className="text-xs border-collapse w-full table-fixed min-w-max">
         <colgroup>
           <col className="w-20" />
-          <col className="w-20" />
           <col className="w-16" />
           {Array.from({ length: maxChoices }, (_, i) => (
-            <col key={i} className="w-40" />
+            <col key={i} className="w-[128px]" />
           ))}
         </colgroup>
         <thead>
           <tr>
-            {["학번", "이름", "구분"].map((h) => (
+            {["이름", "구분"].map((h) => (
               <th
                 key={h}
                 className="bg-slate-900 text-white font-bold px-3 py-2.5 whitespace-nowrap sticky top-0"
@@ -67,22 +66,14 @@ function StudentRows({
   return (
     <>
       {WONSEO_TABLE_ROW_LABELS.map((label, li) => (
-        <tr key={label} className="border-t border-slate-100">
+        <tr key={label} className={cn("border-t", li === 0 ? "border-slate-300" : "border-slate-100")}>
           {li === 0 && (
-            <>
-              <td
-                rowSpan={WONSEO_TABLE_ROW_LABELS.length}
-                className="bg-indigo-50 text-slate-800 font-bold text-center align-middle px-3 py-2 border-r border-slate-200 whitespace-nowrap"
-              >
-                {student.studentId}
-              </td>
-              <td
-                rowSpan={WONSEO_TABLE_ROW_LABELS.length}
-                className="bg-indigo-50 text-slate-800 font-bold text-center align-middle px-3 py-2 border-r border-slate-200 whitespace-nowrap"
-              >
-                {student.name}
-              </td>
-            </>
+            <td
+              rowSpan={WONSEO_TABLE_ROW_LABELS.length}
+              className="bg-indigo-50 text-slate-800 font-bold text-center align-middle px-3 py-2 border-r border-slate-200 whitespace-nowrap"
+            >
+              {student.name}
+            </td>
           )}
           <td className="text-slate-500 font-bold px-3 py-2 whitespace-nowrap">{label}</td>
           {Array.from({ length: maxChoices }, (_, i) => {
