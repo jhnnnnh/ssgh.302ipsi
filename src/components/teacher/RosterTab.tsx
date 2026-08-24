@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { KeyRound, Trash2, UserPlus, Users } from "lucide-react";
+import { KeyRound, Trash2, UserPlus, Users, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { useRoster } from "@/lib/hooks/useRoster";
 import { useActiveClass } from "@/components/providers/ActiveClassProvider";
+import { AddRosterModal } from "@/components/teacher/AddRosterModal";
 import { parseStudentId, parseRosterLine, formatClassLabel } from "@/lib/student-id";
 
 export function RosterTab() {
@@ -14,11 +15,14 @@ export function RosterTab() {
   const confirm = useConfirm();
   const { roster, passwordSetIds, reload } = useRoster();
   const { grade, classNo, isAdmin } = useActiveClass();
-  const [pasteText, setPasteText] = useState("");
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
-  async function handleAddRoster() {
-    const lines = pasteText
+  async function handleAddRoster(text: string): Promise<boolean> {
+    const lines = text
       .split("\n")
       .map((l) => l.trim())
       .filter(Boolean);
@@ -29,7 +33,7 @@ export function RosterTab() {
 
     if (rows.length === 0) {
       showToast("학번(5자리)과 이름이 붙어있는 형식으로 한 줄에 한 명씩 입력해 주세요.", "error");
-      return;
+      return false;
     }
 
     const malformed = rows.filter((r) => !parseStudentId(r.student_id));
@@ -38,13 +42,13 @@ export function RosterTab() {
         `학번 형식이 올바르지 않습니다: ${malformed.map((r) => r.student_id).join(", ")}`,
         "error",
       );
-      return;
+      return false;
     }
 
     if (!isAdmin) {
       if (grade == null || classNo == null) {
         showToast("담당 반 정보를 확인할 수 없습니다.", "error");
-        return;
+        return false;
       }
       const mismatched = rows.filter((r) => {
         const parsed = parseStudentId(r.student_id)!;
@@ -57,7 +61,7 @@ export function RosterTab() {
             .join(", ")})`,
           "error",
         );
-        return;
+        return false;
       }
     }
 
@@ -66,11 +70,11 @@ export function RosterTab() {
     if (error) {
       const message = error.code === "23505" ? "이미 등록된 학번이 포함되어 있습니다." : "명단 등록에 실패했습니다.";
       showToast(message, "error");
-      return;
+      return false;
     }
     showToast(`${rows.length}명이 등록되었습니다.`, "success");
-    setPasteText("");
     reload();
+    return true;
   }
 
   async function handleResetPassword(studentId: string) {
@@ -117,96 +121,127 @@ export function RosterTab() {
     reload();
   }
 
-  async function handleClearRoster() {
-    if (grade == null || classNo == null) {
-      showToast("반 정보를 확인할 수 없습니다.", "error");
-      return;
-    }
-    const classLabel = formatClassLabel(grade, classNo);
-    const first = await confirm({
-      title: "명단 비우기",
-      message: `${classLabel}에 등록된 모든 학생 명단과 계정이 삭제됩니다. 계속하시겠습니까?`,
-      confirmLabel: "계속",
-      danger: true,
-    });
-    if (!first) return;
-    const second = await confirm({
-      title: "최종 확인",
-      message: `정말로 되돌릴 수 없습니다. ${classLabel} 명단을 비우시겠습니까?`,
-      confirmLabel: "전체 삭제",
-      danger: true,
-    });
-    if (!second) return;
+  function toggleSelectMode() {
+    setSelectMode((v) => !v);
+    setSelectedIds(new Set());
+  }
 
-    const res = await fetch("/api/teacher/clear-roster", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ grade, classNo }),
+  function toggleSelectAll() {
+    setSelectedIds((prev) =>
+      prev.size === roster.length ? new Set() : new Set(roster.map((r) => r.student_id)),
+    );
+  }
+
+  function toggleSelectOne(studentId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(studentId)) {
+        next.delete(studentId);
+      } else {
+        next.add(studentId);
+      }
+      return next;
     });
-    if (!res.ok) {
-      showToast("초기화에 실패했습니다.", "error");
+  }
+
+  async function handleBulkRemove() {
+    if (selectedIds.size === 0) {
+      showToast("삭제할 학생을 선택해 주세요.", "error");
       return;
     }
-    showToast("명단이 모두 삭제되었습니다.", "success");
+    const ok = await confirm({
+      message: `선택한 ${selectedIds.size}명을 명단에서 삭제하시겠습니까? 계정과 데이터 접근 권한이 함께 제거됩니다.`,
+      confirmLabel: "삭제",
+      danger: true,
+    });
+    if (!ok) return;
+    setBulkBusy(true);
+    const results = await Promise.all(
+      [...selectedIds].map((studentId) =>
+        fetch("/api/teacher/remove-student", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ studentId }),
+        }),
+      ),
+    );
+    setBulkBusy(false);
+    if (results.some((r) => !r.ok)) {
+      showToast("일부 학생 삭제에 실패했습니다.", "error");
+    } else {
+      showToast(`${selectedIds.size}명이 삭제되었습니다.`, "success");
+    }
+    setSelectMode(false);
+    setSelectedIds(new Set());
     reload();
   }
 
+  const allSelected = roster.length > 0 && selectedIds.size === roster.length;
+
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-            <Users className="w-4 h-4 text-indigo-600" />
-            <span>학생 명단 등록</span>
-          </h3>
-          <span className="text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full">
-            총 {roster.length}명 등록됨
-          </span>
-        </div>
-
-        <textarea
-          value={pasteText}
-          onChange={(e) => setPasteText(e.target.value)}
-          rows={4}
-          placeholder={"학번 이름\n학번 이름\n학번 이름"}
-          className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3.5 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
-        />
-
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-          <p className="text-[11px] text-slate-400">
-            * 명단에 등록된 학생만 학생 모드 로그인이 허용되며 최초 로그인 시 비밀번호가
-            지정됩니다.
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleClearRoster}
-              className="px-3 py-2 border border-rose-200 hover:bg-rose-50 text-rose-600 rounded-xl text-xs font-bold transition"
-            >
-              명단 비우기
-            </button>
-            <button
-              onClick={handleAddRoster}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>명단 추가</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
       <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-          <h4 className="font-bold text-slate-800 text-sm">
-            현재 등록된 학생 명단 및 비밀번호 상태
-          </h4>
-          <span className="text-xs text-slate-400">총 {roster.length}명</span>
+        <div className="p-6 pb-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <Users className="w-4 h-4 text-indigo-600" />
+              <span>등록된 학생 명단</span>
+            </h3>
+            <span className="text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full">
+              총 {roster.length}명 등록됨
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {selectMode ? (
+              <>
+                <button
+                  onClick={toggleSelectAll}
+                  className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold transition"
+                >
+                  {allSelected ? "전체 해제" : "전체 선택"}
+                </button>
+                <button
+                  onClick={handleBulkRemove}
+                  disabled={bulkBusy}
+                  className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-60"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>선택 삭제 ({selectedIds.size})</span>
+                </button>
+                <button
+                  onClick={toggleSelectMode}
+                  className="px-3 py-2 text-slate-400 hover:text-slate-600 rounded-xl text-xs font-bold transition flex items-center gap-1"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>취소</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setAddModalOpen(true)}
+                  className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>명단 추가</span>
+                </button>
+                <button
+                  onClick={toggleSelectMode}
+                  className="px-3.5 py-2 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>명단 삭제</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="overflow-x-auto max-h-96">
           <table className="w-full text-left text-xs text-slate-700">
             <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-600 sticky top-0">
               <tr>
+                {selectMode && <th className="px-4 py-2.5 w-8"></th>}
                 <th className="px-4 py-2.5">번호</th>
                 <th className="px-4 py-2.5">학번</th>
                 <th className="px-4 py-2.5">이름</th>
@@ -217,6 +252,16 @@ export function RosterTab() {
             <tbody className="divide-y divide-slate-100">
               {roster.map((r, idx) => (
                 <tr key={r.student_id}>
+                  {selectMode && (
+                    <td className="px-4 py-2.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(r.student_id)}
+                        onChange={() => toggleSelectOne(r.student_id)}
+                        className="rounded text-indigo-600 focus:ring-indigo-500"
+                      />
+                    </td>
+                  )}
                   <td className="px-4 py-2.5">{idx + 1}</td>
                   <td className="px-4 py-2.5 font-bold">{r.student_id}</td>
                   <td className="px-4 py-2.5">{r.name}</td>
@@ -228,7 +273,7 @@ export function RosterTab() {
                     )}
                   </td>
                   <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-4">
                       <button
                         onClick={() => handleResetPassword(r.student_id)}
                         disabled={busyId === r.student_id}
@@ -257,11 +302,17 @@ export function RosterTab() {
           <div className="text-center py-8">
             <p className="text-xs font-semibold text-slate-500">등록된 학생 명단이 없습니다.</p>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              상단 상자에 명단을 붙여넣어 등록해 주세요.
+              &ldquo;명단 추가&rdquo; 버튼을 눌러 학생을 등록해 주세요.
             </p>
           </div>
         )}
       </div>
+
+      <AddRosterModal
+        open={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onSubmit={handleAddRoster}
+      />
     </div>
   );
 }

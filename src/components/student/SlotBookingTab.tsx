@@ -148,7 +148,7 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
                   )}
                   {isTaken && (
                     <span className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-slate-200 text-slate-500 rounded-xl text-xs font-bold text-center">
-                      신청 마감
+                      마감
                     </span>
                   )}
                   {!slot.is_booked && (
@@ -157,7 +157,7 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
                       disabled={busyId === slot.id}
                       className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
                     >
-                      신청하기
+                      신청
                     </button>
                   )}
                 </div>
