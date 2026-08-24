@@ -156,10 +156,10 @@ export function RosterTab() {
       <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-            <Users className="w-4 h-4 text-amber-500" />
+            <Users className="w-4 h-4 text-indigo-600" />
             <span>학생 명단 등록</span>
           </h3>
-          <span className="text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-full">
+          <span className="text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full">
             총 {roster.length}명 등록됨
           </span>
         </div>
@@ -186,7 +186,7 @@ export function RosterTab() {
             </button>
             <button
               onClick={handleAddRoster}
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>명단 추가</span>

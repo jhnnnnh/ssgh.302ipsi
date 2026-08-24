@@ -141,13 +141,13 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
                     <button
                       onClick={() => handleCancel(slot.id)}
                       disabled={busyId === slot.id}
-                      className="shrink-0 px-4 py-2 sm:w-full sm:px-0 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
+                      className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
                     >
                       취소하기
                     </button>
                   )}
                   {isTaken && (
-                    <span className="shrink-0 px-4 py-2 sm:w-full sm:px-0 bg-slate-200 text-slate-500 rounded-xl text-xs font-bold text-center">
+                    <span className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-slate-200 text-slate-500 rounded-xl text-xs font-bold text-center">
                       신청 마감
                     </span>
                   )}
@@ -155,7 +155,7 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
                     <button
                       onClick={() => handleBook(slot.id)}
                       disabled={busyId === slot.id}
-                      className="shrink-0 px-4 py-2 sm:w-full sm:px-0 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
+                      className="shrink-0 w-24 h-9 sm:w-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-60"
                     >
                       신청하기
                     </button>
