@@ -6,7 +6,7 @@ import { ConfirmProvider } from "@/components/providers/ConfirmProvider";
 import { ImageViewerProvider } from "@/components/providers/ImageViewerProvider";
 
 export const metadata: Metadata = {
-  title: "3학년 2반 입시",
+  title: "삼성여고 2026 입시",
   description: "실시간 수시 상담 및 입시 관리",
 };
 

@@ -146,20 +146,20 @@ function TeacherDashboard() {
           <AppearanceSettingsButtons className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition border border-slate-700" />
           <button
             onClick={() => setPwModalOpen(true)}
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition border border-slate-700 flex items-center gap-1.5"
+            title="비밀번호 변경"
+            className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition border border-slate-700"
           >
             <KeyRound className="w-3.5 h-3.5" />
-            <span>비밀번호 변경</span>
           </button>
           <button
             onClick={async () => {
               await signOut();
               router.replace("/");
             }}
-            className="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs"
+            title="나가기"
+            className="p-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition shadow-xs"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>나가기</span>
           </button>
         </div>
       </div>

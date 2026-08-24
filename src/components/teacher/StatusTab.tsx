@@ -309,7 +309,7 @@ export function StatusTab() {
           </div>
         </div>
 
-        <div className="bg-amber-50/60 border border-amber-200/70 rounded-2xl p-4 space-y-3">
+        <div className="bg-indigo-50/60 border border-indigo-200/70 rounded-2xl p-4 space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
             <input
               value={start}
@@ -330,16 +330,16 @@ export function StatusTab() {
             </button>
           </div>
 
-          <div className="border-t border-dashed border-amber-300" />
+          <div className="border-t border-dashed border-indigo-200" />
 
           <div className="space-y-2.5">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <span className="text-xs font-bold text-amber-800 flex items-center gap-1.5">
+              <span className="text-xs font-bold text-indigo-700 flex items-center gap-1.5">
                 <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
                 <span>즐겨찾기</span>
               </span>
               <div className="flex items-center gap-2">
-                <div className="flex items-center bg-white border border-amber-200 rounded-xl p-0.5 text-[11px] font-bold">
+                <div className="flex items-center bg-white border border-indigo-200 rounded-xl p-0.5 text-[11px] font-bold">
                   {(
                     [
                       { key: "weekday", label: "평일" },
@@ -352,7 +352,7 @@ export function StatusTab() {
                       className={cn(
                         "px-2.5 py-1 rounded-lg transition",
                         activeFavoriteCategory === opt.key
-                          ? "bg-amber-500 text-white"
+                          ? "bg-indigo-600 text-white"
                           : "text-slate-500 hover:text-slate-700",
                       )}
                     >

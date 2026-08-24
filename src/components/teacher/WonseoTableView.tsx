@@ -18,7 +18,15 @@ export function WonseoTableView({ roster, cards }: { roster: Roster[]; cards: Wo
 
   return (
     <div className="overflow-x-auto rounded-2xl border border-slate-200">
-      <table className="text-xs border-collapse w-full min-w-max">
+      <table className="text-xs border-collapse w-full table-fixed min-w-max">
+        <colgroup>
+          <col className="w-20" />
+          <col className="w-20" />
+          <col className="w-16" />
+          {Array.from({ length: maxChoices }, (_, i) => (
+            <col key={i} className="w-40" />
+          ))}
+        </colgroup>
         <thead>
           <tr>
             {["학번", "이름", "구분"].map((h) => (
@@ -85,7 +93,7 @@ function StudentRows({
               <td
                 key={i}
                 className={cn(
-                  "px-3 py-2 text-center whitespace-nowrap",
+                  "px-3 py-2 text-center break-words",
                   isLevel ? `font-bold ${LEVEL_TABLE_CELL_STYLE[card.level]}` : "text-slate-700",
                 )}
               >

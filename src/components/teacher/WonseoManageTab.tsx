@@ -1,6 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  type DragEndEvent,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
 import { Eye, EyeOff, FileSpreadsheet, GraduationCap, LayoutGrid, Plus, Table2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { createClient } from "@/lib/supabase/client";
@@ -10,6 +27,7 @@ import { useRoster } from "@/lib/hooks/useRoster";
 import { useStatusReveal } from "@/lib/hooks/useStatusReveal";
 import { useEqualHeights } from "@/lib/hooks/useEqualHeights";
 import { useActiveClass } from "@/components/providers/ActiveClassProvider";
+import { SortableWonseoCard } from "@/components/wonseo/SortableWonseoCard";
 import { WonseoCardView } from "@/components/wonseo/WonseoCardView";
 import { WonseoCardModal } from "@/components/wonseo/WonseoCardModal";
 import { WonseoTableView } from "@/components/teacher/WonseoTableView";
@@ -32,11 +50,18 @@ export function WonseoManageTab() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<WonseoCard | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const supabase = useMemo(() => createClient(), []);
   const { setRef, maxHeight } = useEqualHeights(
     cards.map((c) => c.id).join("|"),
     cards.length,
+  );
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
   const reload = async (studentId: string) => {
@@ -97,6 +122,32 @@ export function WonseoManageTab() {
     reload(selectedStudentId);
   }
 
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    setActiveId(null);
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = cards.findIndex((c) => c.id === active.id);
+    const newIndex = cards.findIndex((c) => c.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(cards, oldIndex, newIndex).map((card, index) => ({
+      ...card,
+      sort_order: index,
+    }));
+    setCards(reordered);
+
+    const results = await Promise.all(
+      reordered.map((card) =>
+        supabase.from("wonseo_cards").update({ sort_order: card.sort_order }).eq("id", card.id),
+      ),
+    );
+    if (results.some((r) => r.error)) {
+      showToast("순서 저장에 실패했습니다.", "error");
+      reload(selectedStudentId);
+    }
+  }
+
   async function handleExportExcel() {
     setExporting(true);
     const { data, error } = await supabase.from("wonseo_cards").select("*");
@@ -122,6 +173,8 @@ export function WonseoManageTab() {
       ok ? "success" : "error",
     );
   }
+
+  const activeCard = cards.find((c) => c.id === activeId) ?? null;
 
   return (
     <div className="space-y-6">
@@ -213,19 +266,43 @@ export function WonseoManageTab() {
 
             {selectedStudentId ? (
               cards.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-                  {cards.map((card, index) => (
-                    <WonseoCardView
-                      key={card.id}
-                      ref={setRef(index)}
-                      minHeight={maxHeight}
-                      card={card}
-                      showStatus={statusVisible}
-                      onEdit={() => openEdit(card)}
-                      onDelete={() => handleDelete(card)}
-                    />
-                  ))}
-                </div>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={(e) => setActiveId(String(e.active.id))}
+                  onDragCancel={() => setActiveId(null)}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext items={cards.map((c) => c.id)} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                      {cards.map((card, index) => (
+                        <SortableWonseoCard
+                          key={card.id}
+                          id={card.id}
+                          setEqualHeightRef={setRef(index)}
+                          minHeight={maxHeight}
+                          isDragging={activeId === card.id}
+                          card={card}
+                          showStatus={statusVisible}
+                          onEdit={() => openEdit(card)}
+                          onDelete={() => handleDelete(card)}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                  <DragOverlay>
+                    {activeCard && (
+                      <div className="shadow-2xl shadow-indigo-900/30 rounded-3xl rotate-1 scale-[1.03]">
+                        <WonseoCardView
+                          card={activeCard}
+                          showStatus={statusVisible}
+                          onEdit={() => {}}
+                          onDelete={() => {}}
+                        />
+                      </div>
+                    )}
+                  </DragOverlay>
+                </DndContext>
               ) : (
                 <div className="text-center py-12">
                   <p className="text-xs font-semibold text-slate-500">

@@ -1,13 +1,10 @@
 "use client";
 
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef } from "react";
 import { Pencil, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { WonseoAttachmentPreview } from "@/components/wonseo/WonseoAttachmentPreview";
-import { WonseoGalleryModal } from "@/components/wonseo/WonseoGalleryModal";
 import { RecentResultsSection } from "@/components/wonseo/RecentResultsSection";
 import { LEVEL_EMPHASIS_STYLE, STATUS_BADGE_STYLE, STATUS_OPTIONS } from "@/lib/wonseo-constants";
-import type { WonseoCard, WonseoImage } from "@/lib/database.types";
+import type { WonseoCard } from "@/lib/database.types";
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -34,18 +31,6 @@ export const WonseoCardView = forwardRef<
   { card, showStatus, onEdit, onDelete, minHeight, style, className, dragHandle },
   ref,
 ) {
-  const [images, setImages] = useState<WonseoImage[]>([]);
-  const [galleryOpen, setGalleryOpen] = useState(false);
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase
-      .from("wonseo_images")
-      .select("*")
-      .eq("card_id", card.id)
-      .then(({ data }) => setImages(data ?? []));
-  }, [card.id]);
-
   const statusLabel = STATUS_OPTIONS.find((o) => o.value === card.status)?.label ?? card.status;
 
   const emphasis = LEVEL_EMPHASIS_STYLE[card.level];
@@ -98,19 +83,16 @@ export const WonseoCardView = forwardRef<
         </div>
       </div>
 
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-baseline gap-2 min-w-0 flex-1">
-          <h4
-            className="text-base font-black text-slate-900 truncate shrink-0"
-            style={{ maxWidth: "58%" }}
-          >
-            {card.university}
-          </h4>
-          <span className="text-[15px] font-bold text-slate-900 truncate min-w-0">
-            {card.department}
-          </span>
-        </div>
-        <WonseoAttachmentPreview images={images} onClick={() => setGalleryOpen(true)} />
+      <div className="flex items-baseline gap-2 min-w-0">
+        <h4
+          className="text-base font-black text-slate-900 truncate shrink-0"
+          style={{ maxWidth: "58%" }}
+        >
+          {card.university}
+        </h4>
+        <span className="text-[15px] font-bold text-slate-900 truncate min-w-0">
+          {card.department}
+        </span>
       </div>
 
       <div className="flex flex-wrap gap-1.5 text-[11px] font-bold">
@@ -144,11 +126,6 @@ export const WonseoCardView = forwardRef<
       )}
 
       </div>
-      <WonseoGalleryModal
-        open={galleryOpen}
-        onClose={() => setGalleryOpen(false)}
-        images={images}
-      />
     </div>
   );
 });

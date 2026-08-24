@@ -98,7 +98,7 @@ export default function HomePage() {
             <School className="w-6 h-6" />
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            3학년 2반 입시
+            삼성여고 2026 입시
           </h1>
         </div>
         <button
@@ -182,7 +182,7 @@ export default function HomePage() {
       </main>
 
       <footer className="mt-12 text-center text-xs text-slate-400 pb-6 border-t border-slate-200/60 pt-6">
-        <p>© 3학년 2반 수시 상담 및 입시 관리 시스템</p>
+        <p>© 삼성여고 2026 입시 수시 상담 및 입시 관리 시스템</p>
       </footer>
 
       <Modal
