@@ -34,7 +34,6 @@ export type Profile = {
   name: string | null;
   theme_color: string | null;
   font_family: string | null;
-  font_scale: string | null;
   teacher_role: TeacherRole | null;
   grade: number | null;
   class_no: number | null;
@@ -137,7 +136,6 @@ export type Database = {
               | "name"
               | "theme_color"
               | "font_family"
-              | "font_scale"
               | "teacher_role"
               | "grade"
               | "class_no"

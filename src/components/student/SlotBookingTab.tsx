@@ -100,7 +100,7 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
         </div>
       )}
 
-      <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 space-y-4">
+      <div className="bg-white rounded-3xl p-6 shadow-sm border border-indigo-200 space-y-4">
         <div className="border-b border-slate-100 pb-4">
           <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
             <Clock className="w-4 h-4 text-indigo-600" />

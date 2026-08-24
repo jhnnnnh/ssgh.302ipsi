@@ -176,7 +176,7 @@ export function WonseoTab({ studentId }: { studentId: string }) {
           </DragOverlay>
         </DndContext>
       ) : (
-        <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80 space-y-3">
+        <div className="bg-white rounded-3xl p-12 text-center border border-indigo-200 space-y-3">
           <div className="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-3xl flex items-center justify-center mx-auto text-2xl shadow-xs">
             <Layers className="w-6 h-6" />
           </div>

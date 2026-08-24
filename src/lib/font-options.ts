@@ -79,23 +79,3 @@ export function getFontFamilyByKey(key: string | null | undefined): string {
 export function getFontSizeAdjustByKey(key: string | null | undefined): number {
   return getFontOptionByKey(key).sizeAdjust;
 }
-
-/** 글씨 크기 배율. 앱 전체가 rem 단위를 쓰므로 html 루트 font-size를 이 배율만큼 조정한다. */
-export type FontScaleOption = {
-  key: string;
-  label: string;
-  scale: number;
-};
-
-export const DEFAULT_FONT_SCALE_KEY = "medium";
-
-export const FONT_SCALE_OPTIONS: FontScaleOption[] = [
-  { key: "small", label: "작게", scale: 0.9 },
-  { key: "medium", label: "보통 (기본값)", scale: 1 },
-  { key: "large", label: "크게", scale: 1.15 },
-  { key: "xlarge", label: "아주 크게", scale: 1.3 },
-];
-
-export function getFontScaleByKey(key: string | null | undefined): number {
-  return FONT_SCALE_OPTIONS.find((f) => f.key === key)?.scale ?? 1;
-}

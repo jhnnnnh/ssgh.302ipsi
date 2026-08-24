@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
 import { AppearanceSettingsModal } from "@/components/settings/AppearanceSettingsModal";
 
-/** 테마 색상/폰트/글씨 크기 설정 진입점. 학생·교사 화면 양쪽에서 동일하게 사용한다. */
+/** 테마 색상/폰트 설정 진입점. 학생·교사 화면 양쪽에서 동일하게 사용한다. */
 export function AppearanceSettingsButtons({
   className = "p-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-xl transition border border-indigo-200",
 }: {
@@ -17,12 +17,12 @@ export function AppearanceSettingsButtons({
   const showToast = useToast();
   const [modalOpen, setModalOpen] = useState(false);
 
-  async function handleSave(hex: string | null, fontKey: string | null, scaleKey: string | null) {
+  async function handleSave(hex: string | null, fontKey: string | null) {
     if (!session) return;
     const supabase = createClient();
     const { error } = await supabase
       .from("profiles")
-      .update({ theme_color: hex, font_family: fontKey, font_scale: scaleKey })
+      .update({ theme_color: hex, font_family: fontKey })
       .eq("id", session.user.id);
     if (error) {
       showToast("설정 저장에 실패했습니다.", "error");
@@ -43,7 +43,6 @@ export function AppearanceSettingsButtons({
         onClose={() => setModalOpen(false)}
         currentColor={profile?.theme_color ?? null}
         currentFontKey={profile?.font_family ?? null}
-        currentScaleKey={profile?.font_scale ?? null}
         onSave={handleSave}
       />
     </>

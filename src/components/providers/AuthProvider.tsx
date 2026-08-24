@@ -8,7 +8,6 @@ import { buildThemeColorVars } from "@/lib/theme-color";
 import {
   DEFAULT_FONT_KEY,
   getFontFamilyByKey,
-  getFontScaleByKey,
   getFontSizeAdjustByKey,
 } from "@/lib/font-options";
 
@@ -73,15 +72,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null);
   };
 
-  // 글씨 크기는 rem의 기준인 <html> 루트 font-size 자체를 바꿔야 반영되므로
-  // (색상/폰트 종류처럼 하위 트리에 CSS 변수를 얹는 방식으로는 rem에 닿지 않는다),
-  // 여기서만 예외적으로 document.documentElement에 직접 배율을 적용한다.
-  // 폰트마다 같은 크기에서도 실제 보이는 크기가 달라서, 사용자가 고른 배율에
-  // 선택한 폰트 고유의 보정 배율(sizeAdjust)까지 곱해 "보이는 크기"를 통일한다.
+  // 폰트마다 같은 font-size에서도 실제 보이는 크기가 달라서, rem의 기준인 <html> 루트
+  // font-size에 선택한 폰트 고유의 보정 배율(sizeAdjust)을 곱해 "보이는 크기"를 통일한다.
+  // (색상/폰트 종류처럼 하위 트리에 CSS 변수를 얹는 방식으로는 rem에 닿지 않아 예외적으로
+  // document.documentElement에 직접 적용한다.)
   useEffect(() => {
-    const userScale = profile ? getFontScaleByKey(profile.font_scale) : 1;
     const fontAdjust = profile ? getFontSizeAdjustByKey(profile.font_family) : 1;
-    document.documentElement.style.setProperty("--font-scale", String(userScale * fontAdjust));
+    document.documentElement.style.setProperty("--font-scale", String(fontAdjust));
   }, [profile]);
 
   const themeVars = profile?.theme_color ? buildThemeColorVars(profile.theme_color) : null;

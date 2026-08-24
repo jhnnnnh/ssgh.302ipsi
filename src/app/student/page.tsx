@@ -36,14 +36,14 @@ export default function StudentPage() {
 
   return (
     <div className="max-w-4xl mx-auto w-full px-4 py-6 sm:py-10 flex-1 space-y-6">
-      <header className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-200/80 flex items-center gap-3.5">
+      <header className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-indigo-200 flex items-center gap-3.5">
         <Image
           src="/school-logo.png"
           alt="삼성여고 로고"
-          width={48}
-          height={48}
+          width={36}
+          height={36}
           priority
-          className="w-12 h-12 shrink-0"
+          className="w-8 h-8 sm:w-9 sm:h-9 shrink-0"
         />
         <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
           삼성여고 2026 입시
@@ -75,7 +75,7 @@ export default function StudentPage() {
       )}
 
       <footer className="mt-6 text-center text-xs text-slate-400 pb-6 border-t border-slate-200/60 pt-6">
-        <p>© 삼성여고 2026 입시 수시 상담 및 입시 관리 시스템</p>
+        <p>© 삼성여자고등학교 2026학년도 입시 관리 시스템</p>
       </footer>
     </div>
   );

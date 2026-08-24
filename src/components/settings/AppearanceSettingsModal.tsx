@@ -4,12 +4,7 @@ import { useState } from "react";
 import { RotateCcw, Settings } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/cn";
-import {
-  DEFAULT_FONT_KEY,
-  DEFAULT_FONT_SCALE_KEY,
-  FONT_OPTIONS,
-  FONT_SCALE_OPTIONS,
-} from "@/lib/font-options";
+import { DEFAULT_FONT_KEY, FONT_OPTIONS } from "@/lib/font-options";
 
 const DEFAULT_SWATCH = "#16366b";
 const PREVIEW_TEXT = "가나다 ABC 123";
@@ -19,28 +14,21 @@ export function AppearanceSettingsModal({
   onClose,
   currentColor,
   currentFontKey,
-  currentScaleKey,
   onSave,
 }: {
   open: boolean;
   onClose: () => void;
   currentColor: string | null;
   currentFontKey: string | null;
-  currentScaleKey: string | null;
-  onSave: (hex: string | null, fontKey: string | null, scaleKey: string | null) => Promise<void>;
+  onSave: (hex: string | null, fontKey: string | null) => Promise<void>;
 }) {
   const [color, setColor] = useState(currentColor ?? DEFAULT_SWATCH);
   const [selectedFont, setSelectedFont] = useState(currentFontKey ?? DEFAULT_FONT_KEY);
-  const [selectedScale, setSelectedScale] = useState(currentScaleKey ?? DEFAULT_FONT_SCALE_KEY);
   const [saving, setSaving] = useState(false);
 
   async function handleSave(hex: string | null) {
     setSaving(true);
-    await onSave(
-      hex,
-      selectedFont === DEFAULT_FONT_KEY ? null : selectedFont,
-      selectedScale === DEFAULT_FONT_SCALE_KEY ? null : selectedScale,
-    );
+    await onSave(hex, selectedFont === DEFAULT_FONT_KEY ? null : selectedFont);
     setSaving(false);
     onClose();
   }
@@ -48,7 +36,6 @@ export function AppearanceSettingsModal({
   function handleReset() {
     setColor(DEFAULT_SWATCH);
     setSelectedFont(DEFAULT_FONT_KEY);
-    setSelectedScale(DEFAULT_FONT_SCALE_KEY);
     handleSave(null);
   }
 
@@ -94,27 +81,6 @@ export function AppearanceSettingsModal({
             </span>
             <span className="text-sm font-black text-slate-800 tracking-tight">{color}</span>
           </div>
-        </div>
-      </div>
-
-      <div>
-        <label className="block font-bold text-slate-700 mb-1.5">글씨 크기</label>
-        <div className="grid grid-cols-4 gap-1.5">
-          {FONT_SCALE_OPTIONS.map((scale) => (
-            <button
-              key={scale.key}
-              type="button"
-              onClick={() => setSelectedScale(scale.key)}
-              className={cn(
-                "py-2 rounded-xl border font-bold text-[11px] transition",
-                selectedScale === scale.key
-                  ? "bg-indigo-600 text-white border-indigo-600"
-                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50",
-              )}
-            >
-              {scale.label}
-            </button>
-          ))}
         </div>
       </div>
 
