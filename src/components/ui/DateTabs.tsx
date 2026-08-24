@@ -20,7 +20,7 @@ export function DateTabs({
           key={d}
           onClick={() => onSelect(d)}
           className={cn(
-            "shrink-0 px-3.5 py-2 rounded-xl text-sm font-bold border transition whitespace-nowrap",
+            "shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition whitespace-nowrap",
             selected === d
               ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
               : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50",

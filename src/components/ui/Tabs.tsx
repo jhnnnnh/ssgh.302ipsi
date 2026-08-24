@@ -18,15 +18,15 @@ export function Tabs({
   onChange: (key: string) => void;
 }) {
   return (
-    <div className="flex border-b border-slate-200 gap-4 sm:gap-6 text-sm font-bold flex-wrap pt-2">
+    <div className="flex border-b border-slate-200 gap-4 sm:gap-6 text-base flex-wrap pt-2">
       {items.map((item) => (
         <button
           key={item.key}
           onClick={() => onChange(item.key)}
           className={cn(
-            "pb-3 border-b-2 flex items-center gap-2 transition",
+            "pb-3.5 border-b-2 flex items-center gap-2 transition",
             active === item.key
-              ? "border-indigo-600 text-indigo-600"
+              ? "border-indigo-600 text-indigo-600 font-bold"
               : "border-transparent text-slate-400 hover:text-slate-800",
           )}
         >

@@ -45,7 +45,7 @@ export default function StudentPage() {
           priority
           className="w-8 h-8 sm:w-9 sm:h-9 shrink-0"
         />
-        <h1 className="text-lg font-bold text-slate-900 tracking-tight">
+        <h1 className="text-xl font-bold text-slate-900 tracking-tight">
           삼성여고 2026 입시
         </h1>
       </header>

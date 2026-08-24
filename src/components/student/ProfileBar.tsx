@@ -13,7 +13,7 @@ export function ProfileBar({
   onLogout: () => void;
 }) {
   return (
-    <div className="bg-white rounded-3xl p-5 shadow-sm border border-indigo-200 flex items-center justify-between gap-4">
+    <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-indigo-200 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
         <span className="text-lg font-bold tracking-tight text-slate-900">
           {studentId} {name}

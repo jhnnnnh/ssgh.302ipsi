@@ -79,7 +79,7 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
   return (
     <div className="space-y-6">
       {myReservations.length > 0 && (
-        <div className="bg-white border-2 border-indigo-500/80 rounded-3xl p-5 shadow-xs">
+        <div className="bg-white border-2 border-indigo-500/80 rounded-3xl p-6 shadow-xs">
           <h3 className="text-lg font-bold text-indigo-900 mb-3 flex items-center gap-2">
             <CircleCheck className="w-4 h-4 text-indigo-600" />
             <span>내가 신청한 상담 내역</span>
@@ -125,7 +125,7 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
           <button
             onClick={() => setShowPastDates((v) => !v)}
             className={cn(
-              "shrink-0 px-3.5 py-2 rounded-xl text-sm font-bold border transition whitespace-nowrap flex items-center gap-1.5",
+              "shrink-0 px-4 py-2 rounded-xl text-sm font-bold border transition whitespace-nowrap flex items-center gap-1.5",
               showPastDates
                 ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
                 : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50",
