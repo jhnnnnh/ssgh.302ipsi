@@ -20,10 +20,10 @@ export function WonseoTableView({ roster, cards }: { roster: Roster[]; cards: Wo
     <div className="overflow-x-auto rounded-2xl border border-slate-200">
       <table className="text-xs border-collapse w-full table-fixed min-w-max">
         <colgroup>
-          <col className="w-20" />
+          <col className="w-16" />
           <col className="w-16" />
           {Array.from({ length: maxChoices }, (_, i) => (
-            <col key={i} className="w-[128px]" />
+            <col key={i} className="w-[130px]" />
           ))}
         </colgroup>
         <thead>
@@ -66,11 +66,11 @@ function StudentRows({
   return (
     <>
       {WONSEO_TABLE_ROW_LABELS.map((label, li) => (
-        <tr key={label} className={cn("border-t", li === 0 ? "border-slate-300" : "border-slate-100")}>
+        <tr key={label} className={cn("border-t", li === 0 ? "border-slate-400" : "border-slate-100")}>
           {li === 0 && (
             <td
               rowSpan={WONSEO_TABLE_ROW_LABELS.length}
-              className="bg-indigo-50 text-slate-800 font-bold text-center align-middle px-3 py-2 border-r border-slate-200 whitespace-nowrap"
+              className="bg-indigo-50 text-slate-800 font-bold text-center align-middle px-2 py-2 border-r border-slate-200 whitespace-nowrap"
             >
               {student.name}
             </td>
