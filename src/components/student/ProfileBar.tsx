@@ -23,10 +23,10 @@ export function ProfileBar({
         <AppearanceSettingsButtons />
         <button
           onClick={onLogout}
-          className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-slate-200"
+          title="로그아웃"
+          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 rounded-xl transition border border-slate-200"
         >
           <LogOut className="w-3.5 h-3.5" />
-          <span>로그아웃</span>
         </button>
       </div>
     </div>

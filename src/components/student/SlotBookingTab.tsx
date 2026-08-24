@@ -124,8 +124,8 @@ export function SlotBookingTab({ studentId }: { studentId: string }) {
                   className={cn(
                     "rounded-2xl border p-4 flex flex-row items-center justify-between gap-3 sm:flex-col sm:items-stretch",
                     isMine && "bg-indigo-50 border-indigo-300",
-                    isTaken && "bg-slate-100 border-slate-200",
-                    !slot.is_booked && "bg-white border-slate-200",
+                    isTaken && "bg-slate-100 border-indigo-200",
+                    !slot.is_booked && "bg-white border-indigo-200",
                   )}
                 >
                   <div

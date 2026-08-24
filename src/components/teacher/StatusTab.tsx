@@ -274,7 +274,7 @@ export function StatusTab() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden space-y-4 p-5">
+      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden space-y-4 p-6">
         <div className="border-b border-slate-100 pb-4">
           <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
             <ListChecks className="w-4 h-4 text-indigo-600" />

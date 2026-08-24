@@ -154,7 +154,7 @@ export function RosterTab() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
             <Users className="w-4 h-4 text-amber-500" />
             <span>학생 명단 등록</span>

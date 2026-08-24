@@ -166,7 +166,6 @@ export function WonseoManageTab() {
   }
 
   async function handleToggleStatus() {
-    if (!isAdmin) return;
     const ok = await toggle();
     showToast(
       ok ? (statusVisible ? "합격 상태가 비공개로 전환되었습니다." : "합격 상태가 공개되었습니다.") : "변경에 실패했습니다.",
@@ -179,33 +178,25 @@ export function WonseoManageTab() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div className="space-y-1">
-            <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-              <GraduationCap className="w-4 h-4 text-indigo-600" />
-              <span>학생 수시 원서 지도 및 관리</span>
-            </h3>
-            <p className="text-xs text-slate-400">
-              학생을 선택하여 작성한 원서 카드를 실시간 조회/수정하거나, 합격 상태 공개 모드를
-              제어할 수 있습니다.
-            </p>
-          </div>
-          <button
-            onClick={handleToggleStatus}
-            disabled={!isAdmin}
-            title={isAdmin ? undefined : "전체관리자만 변경할 수 있습니다"}
-            className={cn(
-              "w-[168px] shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5",
-              !isAdmin
-                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                : statusVisible
+        <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+            <GraduationCap className="w-4 h-4 text-indigo-600" />
+            <span>학생 수시 원서 지도 및 관리</span>
+          </h3>
+          {isAdmin && (
+            <button
+              onClick={handleToggleStatus}
+              className={cn(
+                "w-[168px] shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5",
+                statusVisible
                   ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                   : "bg-slate-200 hover:bg-slate-300 text-slate-700",
-            )}
-          >
-            {statusVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-            <span>합격 상태</span>
-          </button>
+              )}
+            >
+              {statusVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+              <span>합격 상태</span>
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
