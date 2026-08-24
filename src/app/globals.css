@@ -5,6 +5,20 @@
   --foreground: #1e293b;
   --font-sans: "Pretendard", system-ui, -apple-system, sans-serif;
   --font-scale: 1;
+
+  /* 테마 색상을 따로 설정하지 않은 학생/교사에게 적용되는 기본 강조색(#16366b) 램프.
+     src/lib/theme-color.ts의 buildThemeColorVars와 동일한 규칙으로 생성했다. */
+  --color-indigo-50: #eef3fc;
+  --color-indigo-100: #d9e4f7;
+  --color-indigo-200: #b7cdf0;
+  --color-indigo-300: #89ace7;
+  --color-indigo-400: #5688dc;
+  --color-indigo-500: #2b6bd4;
+  --color-indigo-600: #255cb6;
+  --color-indigo-700: #1f4d98;
+  --color-indigo-800: #193e7b;
+  --color-indigo-900: #153366;
+  --color-indigo-950: #0d203f;
 }
 
 /* 앱 전체가 rem 단위(text-xs 등)를 쓰므로, 글씨 크기 설정은 rem의 기준이 되는

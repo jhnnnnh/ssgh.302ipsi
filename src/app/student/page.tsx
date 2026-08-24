@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FileSignature, MessageCircle, School } from "lucide-react";
+import { FileSignature, MessageCircle } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ProfileBar } from "@/components/student/ProfileBar";
 import { Tabs } from "@/components/ui/Tabs";
@@ -36,9 +37,14 @@ export default function StudentPage() {
   return (
     <div className="max-w-4xl mx-auto w-full px-4 py-6 sm:py-10 flex-1 space-y-6">
       <header className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-200/80 flex items-center gap-3.5">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center shadow-md shadow-indigo-200 shrink-0">
-          <School className="w-6 h-6" />
-        </div>
+        <Image
+          src="/school-logo.png"
+          alt="삼성여고 로고"
+          width={48}
+          height={48}
+          priority
+          className="w-12 h-12 shrink-0"
+        />
         <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
           삼성여고 2026 입시
         </h1>

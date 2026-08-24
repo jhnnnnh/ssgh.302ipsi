@@ -11,7 +11,7 @@ import {
   FONT_SCALE_OPTIONS,
 } from "@/lib/font-options";
 
-const DEFAULT_SWATCH = "#4f46e5";
+const DEFAULT_SWATCH = "#16366b";
 const PREVIEW_TEXT = "가나다 ABC 123";
 
 export function AppearanceSettingsModal({
