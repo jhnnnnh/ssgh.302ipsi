@@ -121,7 +121,7 @@ export function WonseoTab({ studentId }: { studentId: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-3xl p-6 shadow-sm border border-indigo-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-white rounded-3xl p-3.5 sm:p-4 shadow-sm border border-indigo-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-bold tracking-tight text-slate-900">나의 수시 카드</h3>
           <span className="bg-indigo-50 border border-indigo-200 text-indigo-600 text-xs font-bold px-2.5 py-0.5 rounded-full">

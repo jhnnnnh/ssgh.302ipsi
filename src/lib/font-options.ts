@@ -12,8 +12,10 @@ export type FontOption = {
   /**
    * 폰트마다 같은 font-size에서도 실제로 보이는 크기(글자 높이/너비)가 달라서
    * 눈에 보이는 크기를 Pretendard 기준으로 맞추기 위한 보정 배율.
-   * Canvas 2D의 actualBoundingBox 측정치(다양한 한글/영문/숫자 샘플 텍스트 기준)로
-   * 각 폰트를 실측해 Pretendard 대비 비율의 기하평균으로 산출했다.
+   * 실제 화면 문구 10종 × font-weight 700(앱 UI 대부분이 font-bold라 이 굵기로
+   * 측정해야 실제 렌더링과 맞음)으로 Canvas 2D actualBoundingBox를 측정해
+   * 표본별 Pretendard 대비 비율의 기하평균을 낸 뒤, 높이 비중 0.65 · 너비 비중
+   * 0.35로 가중 평균해 산출했다(사람이 "크기"를 판단할 때 높이 영향이 더 커서).
    */
   sizeAdjust: number;
 };
@@ -31,73 +33,73 @@ export const FONT_OPTIONS: FontOption[] = [
     key: "noto-sans-kr",
     label: "Noto Sans KR",
     cssFamily: "var(--font-noto-sans-kr), 'Pretendard', sans-serif",
-    sizeAdjust: 0.98,
+    sizeAdjust: 0.976,
   },
   {
     key: "scdream",
     label: "에스코어 드림 (SCDream)",
     cssFamily: "'SCDream', 'Pretendard', sans-serif",
-    sizeAdjust: 0.92,
+    sizeAdjust: 0.916,
   },
   {
     key: "nanum-square",
     label: "나눔스퀘어 (NanumSquare)",
     cssFamily: "'NanumSquare', 'Pretendard', sans-serif",
-    sizeAdjust: 0.95,
+    sizeAdjust: 0.954,
   },
   {
     key: "hahmlet",
     label: "함렡 (Hahmlet)",
     cssFamily: "var(--font-hahmlet), 'Pretendard', sans-serif",
-    sizeAdjust: 0.97,
+    sizeAdjust: 0.979,
   },
   {
     key: "joseon-gungseo",
     label: "조선궁서체 (Joseon Gungseo)",
     cssFamily: "'JoseonGungseo', 'Pretendard', sans-serif",
-    sizeAdjust: 0.95,
+    sizeAdjust: 0.923,
   },
   {
     key: "sd-unicef-dodam",
     label: "SD 유니세프 도담체",
     cssFamily: "'SDUnicefDodam', 'Pretendard', sans-serif",
-    sizeAdjust: 1.16,
+    sizeAdjust: 1.111,
   },
   {
     key: "gyeonggi-cheonnyeon-batang",
     label: "경기천년바탕",
     cssFamily: "'GyeonggiCheonnyeonBatang', 'Pretendard', sans-serif",
-    sizeAdjust: 0.95,
+    sizeAdjust: 0.927,
   },
   {
     key: "lee-seoyoon",
     label: "이서윤체",
     cssFamily: "'LeeSeoyoon', 'Pretendard', sans-serif",
-    sizeAdjust: 1.11,
+    sizeAdjust: 1.1,
   },
   {
     key: "moneygraphy",
     label: "머니그라피",
     cssFamily: "'Moneygraphy', 'Pretendard', sans-serif",
-    sizeAdjust: 0.96,
+    sizeAdjust: 0.955,
   },
   {
     key: "gmarket-sans",
     label: "G마켓 산스",
     cssFamily: "'GmarketSans', 'Pretendard', sans-serif",
-    sizeAdjust: 0.93,
+    sizeAdjust: 0.965,
   },
   {
     key: "bm-dohyeon",
     label: "배민 도현체",
     cssFamily: "'BMDoHyeon', 'Pretendard', sans-serif",
-    sizeAdjust: 0.9,
+    sizeAdjust: 0.883,
   },
   {
     key: "okdd-gothic",
     label: "Ok단단체",
     cssFamily: "'OKDDGothic', 'Pretendard', sans-serif",
-    sizeAdjust: 1.11,
+    sizeAdjust: 1.126,
   },
 ];
 

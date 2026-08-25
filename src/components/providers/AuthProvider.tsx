@@ -93,8 +93,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ session, profile, loading, refreshProfile, signOut }}>
-      {/* display:contents는 레이아웃에 영향을 주지 않으면서 CSS 변수(+폰트)만 자식들에 전파한다. */}
-      <div style={{ display: "contents", ...themeVars, ...fontVars }}>{children}</div>
+      {/* display:contents는 레이아웃에 영향을 주지 않으면서 CSS 변수(+폰트)만 자식들에 전파한다.
+          data-pretendard는 기본 폰트(Pretendard)를 쓰는 동안에만 globals.css의 굵기 보정
+          규칙([data-pretendard] ...)이 적용되도록 하는 표식이다. */}
+      <div
+        data-pretendard={isCustomFont ? undefined : ""}
+        style={{ display: "contents", ...themeVars, ...fontVars }}
+      >
+        {children}
+      </div>
     </AuthContext.Provider>
   );
 }

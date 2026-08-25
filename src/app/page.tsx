@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { IdCard, KeyRound, LogIn, ShieldUser, User } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -93,37 +92,21 @@ export default function HomePage() {
 
   return (
     <div className="max-w-4xl mx-auto w-full px-4 py-6 sm:py-10 flex-1">
-      <header className="bg-white rounded-3xl p-5 sm:p-6 mb-6 shadow-sm border border-slate-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <Image
-            src="/school-logo.png"
-            alt="삼성여고 로고"
-            width={36}
-            height={36}
-            priority
-            className="w-8 h-8 sm:w-9 sm:h-9 shrink-0"
-          />
-          <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">
-            삼성여고 2026 입시
-          </h1>
-        </div>
-        <button
-          onClick={() => setTeacherModalOpen(true)}
-          className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-2xl transition flex items-center gap-2 border border-slate-200/90 self-end sm:self-auto"
-        >
-          <ShieldUser className="w-4 h-4 text-slate-500" />
-          <span>선생님 모드</span>
-        </button>
-      </header>
-
       <main className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80 space-y-6">
-        <div className="text-center max-w-md mx-auto space-y-2">
+        <div className="flex justify-end">
+          <button
+            onClick={() => setTeacherModalOpen(true)}
+            className="text-[11px] font-bold text-slate-400 hover:text-indigo-600 transition flex items-center gap-1"
+          >
+            <ShieldUser className="w-3 h-3" />
+            <span>선생님 모드</span>
+          </button>
+        </div>
+        <div className="text-center max-w-md mx-auto space-y-2 -mt-2">
           <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto text-xl font-bold mb-3">
             <LogIn className="w-5 h-5" />
           </div>
-          <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
-            학생 로그인
-          </h2>
+          <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">로그인</h2>
           <p className="text-xs text-slate-500 leading-relaxed">
             학번과 이름, 비밀번호를 입력하여 로그인하세요.
             <br />

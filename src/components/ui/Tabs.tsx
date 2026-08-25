@@ -26,7 +26,7 @@ export function Tabs({
           className={cn(
             "pb-3.5 border-b-2 flex items-center gap-2 transition",
             active === item.key
-              ? "border-indigo-600 text-indigo-600 font-bold"
+              ? "border-indigo-600 text-indigo-600 font-bold emphasis-title"
               : "border-transparent text-slate-400 hover:text-slate-800",
           )}
         >

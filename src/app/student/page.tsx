@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FileSignature, MessageCircle } from "lucide-react";
+import { FileSignature, LogOut, MessageCircle, School } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { ProfileBar } from "@/components/student/ProfileBar";
+import { AppearanceSettingsButtons } from "@/components/settings/AppearanceSettingsButtons";
+import { DashboardHeader } from "@/components/ui/DashboardHeader";
 import { Tabs } from "@/components/ui/Tabs";
 import { SlotBookingTab } from "@/components/student/SlotBookingTab";
 import { WonseoTab } from "@/components/student/WonseoTab";
@@ -36,28 +36,28 @@ export default function StudentPage() {
 
   return (
     <div className="max-w-4xl mx-auto w-full px-4 py-6 sm:py-10 flex-1 space-y-6">
-      <header className="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-indigo-200 flex items-center gap-3.5">
-        <Image
-          src="/school-logo.png"
-          alt="삼성여고 로고"
-          width={36}
-          height={36}
-          priority
-          className="w-8 h-8 sm:w-9 sm:h-9 shrink-0"
-        />
-        <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">
-          삼성여고 2026 입시
-        </h1>
-      </header>
-
-      <ProfileBar
-        studentId={profile.student_id}
-        name={profile.name ?? ""}
-        onLogout={async () => {
-          await signOut();
-          router.replace("/");
-        }}
-      />
+      <DashboardHeader
+        icon={<School className="w-5 h-5" />}
+        actions={
+          <>
+            <AppearanceSettingsButtons />
+            <button
+              onClick={async () => {
+                await signOut();
+                router.replace("/");
+              }}
+              title="로그아웃"
+              className="p-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition shadow-xs"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </>
+        }
+      >
+        <span className="text-lg font-bold emphasis-title tracking-tight text-slate-900">
+          {profile.student_id} {profile.name}
+        </span>
+      </DashboardHeader>
 
       <Tabs
         items={[

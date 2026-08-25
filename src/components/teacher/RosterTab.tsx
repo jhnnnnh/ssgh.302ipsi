@@ -257,7 +257,7 @@ export function RosterTab() {
                     </td>
                   )}
                   <td className="px-4 py-2.5">{idx + 1}</td>
-                  <td className="px-4 py-2.5 font-bold">{r.student_id}</td>
+                  <td className="px-4 py-2.5 font-bold emphasis-title">{r.student_id}</td>
                   <td className="px-4 py-2.5">{r.name}</td>
                   <td className="px-4 py-2.5">
                     {passwordSetIds.has(r.student_id) ? (
