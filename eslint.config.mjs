@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 정적 자산(예: pdf.js 워커 번들)은 린트 대상이 아니다.
+    "public/**",
   ]),
 ]);
 

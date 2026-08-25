@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  CircleHelp,
   Contact,
   GraduationCap,
   KeyRound,
@@ -24,6 +25,7 @@ import { WonseoManageTab } from "@/components/teacher/WonseoManageTab";
 import { RosterTab } from "@/components/teacher/RosterTab";
 import { TeacherManageTab } from "@/components/teacher/TeacherManageTab";
 import { ChangePasswordModal } from "@/components/teacher/ChangePasswordModal";
+import { ManualHelpModal } from "@/components/teacher/ManualHelpModal";
 import { formatClassLabel } from "@/lib/student-id";
 
 type TeacherTab = "status" | "wonseo" | "roster" | "teachers";
@@ -64,6 +66,7 @@ function TeacherDashboard() {
   const { grade, classNo, isAdmin, classOptions, setActiveClass, loading } = useActiveClass();
   const [tab, setTab] = useState<TeacherTab>("status");
   const [pwModalOpen, setPwModalOpen] = useState(false);
+  const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [togglingAdmin, setTogglingAdmin] = useState(false);
   const showToast = useToast();
 
@@ -131,6 +134,13 @@ function TeacherDashboard() {
             )}
             <AppearanceSettingsButtons />
             <button
+              onClick={() => setHelpModalOpen(true)}
+              title="사용 매뉴얼"
+              className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 rounded-xl transition border border-slate-200"
+            >
+              <CircleHelp className="w-3.5 h-3.5" />
+            </button>
+            <button
               onClick={() => setPwModalOpen(true)}
               title="비밀번호 변경"
               className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 rounded-xl transition border border-slate-200"
@@ -188,6 +198,7 @@ function TeacherDashboard() {
       {tab === "teachers" && isAdmin && <TeacherManageTab />}
 
       <ChangePasswordModal open={pwModalOpen} onClose={() => setPwModalOpen(false)} />
+      <ManualHelpModal open={helpModalOpen} onClose={() => setHelpModalOpen(false)} />
     </div>
   );
 }

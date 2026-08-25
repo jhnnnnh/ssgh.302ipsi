@@ -11,6 +11,7 @@ export function Modal({
   children,
   footer,
   maxWidth = "max-w-lg",
+  backdropBlur = true,
 }: {
   open: boolean;
   onClose: () => void;
@@ -19,10 +20,18 @@ export function Modal({
   children: React.ReactNode;
   footer?: React.ReactNode;
   maxWidth?: string;
+  /** PDF 등 <iframe>으로 삽입된 콘텐츠는 backdrop-filter가 있으면 크롬에서 검게 렌더링되는
+   * 알려진 버그가 있어, 그런 모달에서는 false로 꺼서 우회한다. */
+  backdropBlur?: boolean;
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div
+      className={cn(
+        "fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 overflow-y-auto",
+        backdropBlur && "backdrop-blur-sm",
+      )}
+    >
       <div
         className={cn(
           "bg-white rounded-3xl p-6 w-full shadow-xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto",
