@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Paperclip } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
+import { WonseoImageThumb } from "@/components/wonseo/WonseoImageThumb";
 import { RecentResultsEditor } from "@/components/wonseo/RecentResultsEditor";
 import { emptyResultYear } from "@/components/wonseo/RecentResultsTable";
+import { buildStoragePath, deleteWonseoImageFile, uploadWonseoImage } from "@/lib/wonseo-storage";
 import {
   LEVEL_OPTIONS,
   LEVEL_TOGGLE_STYLE,
@@ -21,6 +23,7 @@ import type {
   SelectionMode,
   SupportLevel,
   WonseoCard,
+  WonseoImage,
 } from "@/lib/database.types";
 
 interface FormState {
@@ -29,6 +32,7 @@ interface FormState {
   status: ApplicationStatus;
   university: string;
   department: string;
+  enrollment: string;
   category: ApplicationCategory;
   subCategory: string;
   selectionMode: SelectionMode;
@@ -38,7 +42,7 @@ interface FormState {
   calculatedGrade: string;
   minStandard: string;
   hasExamDate: boolean;
-  examDate: string;
+  examDateAt: string;
   memo: string;
   recentResults: RecentResultYear[];
 }
@@ -49,6 +53,7 @@ const EMPTY_FORM: FormState = {
   status: "지원예정",
   university: "",
   department: "",
+  enrollment: "",
   category: "학생부교과",
   subCategory: "",
   selectionMode: "single",
@@ -58,14 +63,14 @@ const EMPTY_FORM: FormState = {
   calculatedGrade: "",
   minStandard: "",
   hasExamDate: false,
-  examDate: "",
+  examDateAt: "",
   memo: "",
   recentResults: [],
 };
 
 function defaultRecentResultYears(): RecentResultYear[] {
   const thisYear = new Date().getFullYear();
-  return [thisYear - 1, thisYear - 2, thisYear - 3].map((y) => emptyResultYear(String(y)));
+  return [thisYear, thisYear - 1, thisYear - 2].map((y) => emptyResultYear(String(y)));
 }
 
 function cardToForm(card: WonseoCard): FormState {
@@ -75,6 +80,7 @@ function cardToForm(card: WonseoCard): FormState {
     status: card.status,
     university: card.university ?? "",
     department: card.department ?? "",
+    enrollment: card.enrollment != null ? String(card.enrollment) : "",
     category: card.category,
     subCategory: card.sub_category ?? "",
     selectionMode: card.selection_mode,
@@ -84,7 +90,7 @@ function cardToForm(card: WonseoCard): FormState {
     calculatedGrade: card.calculated_grade ?? "",
     minStandard: card.min_standard ?? "",
     hasExamDate: card.has_exam_date,
-    examDate: card.exam_date ?? "",
+    examDateAt: card.exam_date_at ?? "",
     memo: card.memo ?? "",
     recentResults: card.recent_results ?? [],
   };
@@ -109,6 +115,8 @@ export function WonseoCardModal({
 }) {
   const showToast = useToast();
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [existingImages, setExistingImages] = useState<WonseoImage[]>([]);
+  const [newFiles, setNewFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [universityError, setUniversityError] = useState(false);
   const universityRef = useRef<HTMLInputElement>(null);
@@ -121,7 +129,18 @@ export function WonseoCardModal({
         ? cardToForm(editingCard)
         : { ...EMPTY_FORM, recentResults: defaultRecentResultYears() },
     );
+    setNewFiles([]);
     setUniversityError(false);
+    if (editingCard) {
+      const supabase = createClient();
+      supabase
+        .from("wonseo_images")
+        .select("*")
+        .eq("card_id", editingCard.id)
+        .then(({ data }) => setExistingImages(data ?? []));
+    } else {
+      setExistingImages([]);
+    }
   }, [open, editingCard]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -129,6 +148,19 @@ export function WonseoCardModal({
   }
 
   const isCustomCategory = !(QUICK_CATEGORY_OPTIONS as readonly string[]).includes(form.category);
+
+  async function handleRemoveExistingImage(img: WonseoImage) {
+    const supabase = createClient();
+    await supabase.from("wonseo_images").delete().eq("id", img.id);
+    await deleteWonseoImageFile(img.storage_path);
+    setExistingImages((prev) => prev.filter((i) => i.id !== img.id));
+  }
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    setNewFiles((prev) => [...prev, ...files]);
+    e.target.value = "";
+  }
 
   async function handleSave() {
     if (!form.university.trim()) {
@@ -149,6 +181,7 @@ export function WonseoCardModal({
       status: form.status,
       university: form.university.trim(),
       department: form.department.trim() || null,
+      enrollment: form.enrollment.trim() ? Number(form.enrollment.trim()) : null,
       category: form.category,
       sub_category: form.subCategory.trim() || null,
       selection_mode: form.selectionMode,
@@ -158,30 +191,46 @@ export function WonseoCardModal({
       calculated_grade: form.calculatedGrade.trim() || null,
       min_standard: form.minStandard.trim() || null,
       has_exam_date: form.hasExamDate,
-      exam_date: form.hasExamDate ? form.examDate.trim() || null : null,
+      exam_date_at: form.hasExamDate ? form.examDateAt || null : null,
       memo: form.memo.trim() || null,
       recent_results: form.recentResults,
       updated_at: new Date().toISOString(),
     };
 
-    if (editingCard) {
-      const { error } = await supabase
-        .from("wonseo_cards")
-        .update(payload)
-        .eq("id", editingCard.id);
+    let cardId = editingCard?.id ?? null;
+
+    if (cardId) {
+      const { error } = await supabase.from("wonseo_cards").update(payload).eq("id", cardId);
       if (error) {
         showToast("저장에 실패했습니다.", "error");
         setSaving(false);
         return;
       }
     } else {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("wonseo_cards")
-        .insert({ ...payload, sort_order: nextSortOrder ?? 0 });
-      if (error) {
+        .insert({ ...payload, sort_order: nextSortOrder ?? 0 })
+        .select("id")
+        .single();
+      if (error || !data) {
         showToast("저장에 실패했습니다.", "error");
         setSaving(false);
         return;
+      }
+      cardId = data.id;
+    }
+
+    for (const file of newFiles) {
+      const path = buildStoragePath(studentId, cardId, file);
+      try {
+        await uploadWonseoImage(path, file);
+        await supabase.from("wonseo_images").insert({
+          card_id: cardId,
+          student_id: studentId,
+          storage_path: path,
+        });
+      } catch {
+        showToast(`${file.name} 업로드에 실패했습니다.`, "error");
       }
     }
 
@@ -269,8 +318,8 @@ export function WonseoCardModal({
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="sm:col-span-1">
           <label className="block font-bold text-slate-700 mb-1">
             대학교명 {universityError && <span className="text-rose-500">(필수)</span>}
           </label>
@@ -296,6 +345,16 @@ export function WonseoCardModal({
             value={form.department}
             onChange={(e) => set("department", e.target.value)}
             placeholder="OO학과 또는 OO학부"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label className="block font-bold text-slate-700 mb-1">모집인원</label>
+          <input
+            value={form.enrollment}
+            onChange={(e) => set("enrollment", e.target.value.replace(/[^0-9]/g, ""))}
+            inputMode="numeric"
+            placeholder="예: 10"
             className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
@@ -442,12 +501,15 @@ export function WonseoCardModal({
           <span>면접 / 고사 일정 등록</span>
         </label>
         {form.hasExamDate && (
-          <input
-            value={form.examDate}
-            onChange={(e) => set("examDate", e.target.value)}
-            placeholder="11/19(목) 14:00 면접"
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
+          <>
+            <input
+              type="date"
+              value={form.examDateAt}
+              onChange={(e) => set("examDateAt", e.target.value)}
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <p className="text-[11px] text-slate-400">시간이나 준비물 등은 아래 메모에 적어주세요.</p>
+          </>
         )}
       </div>
 
@@ -465,6 +527,48 @@ export function WonseoCardModal({
           placeholder="메모할 사항을 자유롭게 입력하세요."
           className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 font-sans text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
         />
+      </div>
+
+      <div className="space-y-2 border-t border-slate-100 pt-3">
+        <div className="flex items-center justify-between">
+          <label className="block font-bold text-slate-700">이미지 파일 첨부</label>
+          <label className="cursor-pointer px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-[11px] font-bold transition flex items-center gap-1">
+            <Paperclip className="w-3 h-3" />
+            <span>사진 선택</span>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+          </label>
+        </div>
+        <div className="flex flex-wrap gap-2 pt-1 min-h-[40px]">
+          {existingImages.map((img) => (
+            <WonseoImageThumb
+              key={img.id}
+              path={img.storage_path}
+              onRemove={() => handleRemoveExistingImage(img)}
+            />
+          ))}
+          {newFiles.map((file, idx) => (
+            <div
+              key={idx}
+              className="relative w-16 h-16 rounded-xl overflow-hidden border border-indigo-200 bg-slate-100 shrink-0"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={URL.createObjectURL(file)}
+                alt={file.name}
+                className="w-full h-full object-cover"
+              />
+              <span className="absolute bottom-0 inset-x-0 bg-indigo-600/80 text-white text-[9px] text-center">
+                신규
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
     </Modal>

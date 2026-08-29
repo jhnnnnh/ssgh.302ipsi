@@ -1,4 +1,4 @@
-const WEEKDAY_KR = ["일", "월", "화", "수", "목", "금", "토"];
+export const WEEKDAY_KR = ["일", "월", "화", "수", "목", "금", "토"];
 
 export function formatDateLabel(dateStr: string) {
   const d = new Date(`${dateStr}T00:00:00`);

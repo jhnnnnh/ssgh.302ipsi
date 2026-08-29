@@ -75,6 +75,7 @@ export type WonseoCard = {
   status: ApplicationStatus;
   university: string | null;
   department: string | null;
+  enrollment: number | null;
   category: ApplicationCategory;
   sub_category: string | null;
   selection_mode: SelectionMode;
@@ -85,6 +86,8 @@ export type WonseoCard = {
   min_standard: string | null;
   has_exam_date: boolean;
   exam_date: string | null;
+  /** 캘린더 연동용 실제 날짜(exam_date는 시간·메모를 포함한 자유 텍스트라 별도로 둔다). */
+  exam_date_at: string | null;
   memo: string | null;
   recent_results: RecentResultYear[];
   sort_order: number;
@@ -114,6 +117,27 @@ export type WonseoImage = {
 export type AppSettings = {
   key: string;
   value: Record<string, unknown>;
+};
+
+export type CalendarEventType = "wonseo_linked" | "personal" | "class" | "grade";
+
+/**
+ * 입시 일정 캘린더 이벤트. wonseo_linked 유형은 title/date를 저장하지 않고
+ * 항상 연결된 wonseo_cards를 조회해 화면에서 채워 넣는다(원서 카드가 곧 원본).
+ */
+export type CalendarEvent = {
+  id: string;
+  type: CalendarEventType;
+  title: string | null;
+  date: string | null;
+  color: string;
+  student_id: string | null;
+  grade: number | null;
+  class_no: number | null;
+  wonseo_card_id: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 };
 
 type NoRelationships = { Relationships: [] };
@@ -183,6 +207,12 @@ export type Database = {
         Row: AppSettings;
         Insert: AppSettings;
         Update: Partial<AppSettings>;
+      } & NoRelationships;
+      calendar_events: {
+        Row: CalendarEvent;
+        Insert: Pick<CalendarEvent, "type" | "color" | "created_by"> &
+          Partial<Omit<CalendarEvent, "type" | "color" | "created_by" | "id">> & { id?: string };
+        Update: Partial<CalendarEvent>;
       } & NoRelationships;
     };
     Views: Record<string, never>;

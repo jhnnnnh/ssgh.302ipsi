@@ -2,18 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileSignature, LogOut, MessageCircle, School } from "lucide-react";
+import { CalendarDays, FileSignature, LogOut, MessageCircle, School } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { AppearanceSettingsButtons } from "@/components/settings/AppearanceSettingsButtons";
 import { DashboardHeader } from "@/components/ui/DashboardHeader";
 import { Tabs } from "@/components/ui/Tabs";
 import { SlotBookingTab } from "@/components/student/SlotBookingTab";
 import { WonseoTab } from "@/components/student/WonseoTab";
+import { StudentCalendarTab } from "@/components/student/StudentCalendarTab";
+
+type StudentTab = "consulting" | "wonseo" | "calendar";
 
 export default function StudentPage() {
   const router = useRouter();
   const { session, profile, loading, signOut } = useAuth();
-  const [tab, setTab] = useState<"consulting" | "wonseo">("consulting");
+  const [tab, setTab] = useState<StudentTab>("consulting");
 
   useEffect(() => {
     if (loading) return;
@@ -63,16 +66,15 @@ export default function StudentPage() {
         items={[
           { key: "consulting", label: "상담 신청", icon: <MessageCircle className="w-4 h-4" /> },
           { key: "wonseo", label: "수시 원서", icon: <FileSignature className="w-4 h-4" /> },
+          { key: "calendar", label: "입시 일정", icon: <CalendarDays className="w-4 h-4" /> },
         ]}
         active={tab}
-        onChange={(k) => setTab(k as "consulting" | "wonseo")}
+        onChange={(k) => setTab(k as StudentTab)}
       />
 
-      {tab === "consulting" ? (
-        <SlotBookingTab studentId={profile.student_id} />
-      ) : (
-        <WonseoTab studentId={profile.student_id} />
-      )}
+      {tab === "consulting" && <SlotBookingTab studentId={profile.student_id} />}
+      {tab === "wonseo" && <WonseoTab studentId={profile.student_id} />}
+      {tab === "calendar" && <StudentCalendarTab studentId={profile.student_id} />}
 
       <footer className="mt-6 text-center text-xs text-slate-400 pb-6 border-t border-slate-200/60 pt-6">
         <p>© 삼성여자고등학교 2026학년도 입시 관리 시스템</p>

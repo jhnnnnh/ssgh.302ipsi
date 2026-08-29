@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  CalendarDays,
   CircleHelp,
   Contact,
   GraduationCap,
@@ -23,12 +24,13 @@ import { Tabs } from "@/components/ui/Tabs";
 import { StatusTab } from "@/components/teacher/StatusTab";
 import { WonseoManageTab } from "@/components/teacher/WonseoManageTab";
 import { RosterTab } from "@/components/teacher/RosterTab";
+import { TeacherCalendarTab } from "@/components/teacher/TeacherCalendarTab";
 import { TeacherManageTab } from "@/components/teacher/TeacherManageTab";
 import { ChangePasswordModal } from "@/components/teacher/ChangePasswordModal";
 import { ManualHelpModal } from "@/components/teacher/ManualHelpModal";
 import { formatClassLabel } from "@/lib/student-id";
 
-type TeacherTab = "status" | "wonseo" | "roster" | "teachers";
+type TeacherTab = "status" | "wonseo" | "roster" | "calendar" | "teachers";
 
 export default function TeacherPage() {
   const router = useRouter();
@@ -74,6 +76,7 @@ function TeacherDashboard() {
     { key: "status", label: "상담 신청 현황", icon: <ListChecks className="w-4 h-4" /> },
     { key: "wonseo", label: "수시 원서 관리", icon: <GraduationCap className="w-4 h-4" /> },
     { key: "roster", label: "학생 명단 관리", icon: <UsersRound className="w-4 h-4" /> },
+    { key: "calendar", label: "입시 일정", icon: <CalendarDays className="w-4 h-4" /> },
     ...(isAdmin
       ? [{ key: "teachers", label: "교사 계정 관리", icon: <UserCog className="w-4 h-4" /> }]
       : []),
@@ -193,6 +196,7 @@ function TeacherDashboard() {
           {tab === "status" && <StatusTab />}
           {tab === "wonseo" && <WonseoManageTab />}
           {tab === "roster" && <RosterTab />}
+          {tab === "calendar" && <TeacherCalendarTab />}
         </>
       )}
       {tab === "teachers" && isAdmin && <TeacherManageTab />}

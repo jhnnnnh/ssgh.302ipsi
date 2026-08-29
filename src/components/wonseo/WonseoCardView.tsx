@@ -1,10 +1,14 @@
 "use client";
 
-import { forwardRef } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { WonseoAttachmentPreview } from "@/components/wonseo/WonseoAttachmentPreview";
+import { WonseoImageLightbox } from "@/components/wonseo/WonseoImageLightbox";
 import { RecentResultsSection } from "@/components/wonseo/RecentResultsSection";
 import { LEVEL_EMPHASIS_STYLE, STATUS_BADGE_STYLE, STATUS_OPTIONS } from "@/lib/wonseo-constants";
-import type { WonseoCard } from "@/lib/database.types";
+import { formatDateLabel } from "@/lib/time";
+import type { WonseoCard, WonseoImage } from "@/lib/database.types";
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -31,6 +35,18 @@ export const WonseoCardView = forwardRef<
   { card, showStatus, onEdit, onDelete, minHeight, style, className, dragHandle },
   ref,
 ) {
+  const [images, setImages] = useState<WonseoImage[]>([]);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("wonseo_images")
+      .select("*")
+      .eq("card_id", card.id)
+      .then(({ data }) => setImages(data ?? []));
+  }, [card.id]);
+
   const statusLabel = STATUS_OPTIONS.find((o) => o.value === card.status)?.label ?? card.status;
 
   const emphasis = LEVEL_EMPHASIS_STYLE[card.level];
@@ -83,38 +99,48 @@ export const WonseoCardView = forwardRef<
         </div>
       </div>
 
-      <div className="flex items-baseline gap-2 min-w-0">
-        <h4
-          className="text-lg font-bold text-slate-900 truncate shrink-0"
-          style={{ maxWidth: "58%" }}
-        >
-          {card.university}
-        </h4>
-        <span className="text-lg font-bold text-slate-900 truncate min-w-0">
-          {card.department}
-        </span>
-      </div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-baseline gap-2 min-w-0">
+            <h4
+              className="text-lg font-bold text-slate-900 truncate shrink-0"
+              style={{ maxWidth: "58%" }}
+            >
+              {card.university}
+            </h4>
+            <span className="text-lg font-bold text-slate-900 truncate min-w-0">
+              {card.department}
+            </span>
+          </div>
 
-      <div className="flex flex-wrap gap-1.5 text-xs font-bold">
-        <span className="border border-slate-300 text-slate-700 px-2 py-1 rounded-lg">
-          {card.category}
-        </span>
-        {card.sub_category && (
-          <span className="border border-slate-300 text-slate-700 px-2 py-1 rounded-lg">
-            {card.sub_category}
-          </span>
-        )}
+          <div className="flex flex-wrap gap-1.5 text-xs font-bold">
+            <span className="border border-slate-300 text-slate-700 px-2 py-1 rounded-lg">
+              {card.category}
+            </span>
+            {card.sub_category && (
+              <span className="border border-slate-300 text-slate-700 px-2 py-1 rounded-lg">
+                {card.sub_category}
+              </span>
+            )}
+          </div>
+        </div>
+        <WonseoAttachmentPreview images={images} onClick={() => setLightboxOpen(true)} />
       </div>
 
       <div className="text-[13px] space-y-1 border-t border-slate-100 pt-3">
         {methodValue && <InfoRow label="전형방법" value={methodValue} />}
-        {(card.calculated_grade || card.min_standard) && (
+        {(card.calculated_grade || card.min_standard || card.enrollment != null) && (
           <div className="flex flex-wrap gap-x-4">
+            {card.enrollment != null && (
+              <InfoRow label="모집인원" value={`${card.enrollment}명`} />
+            )}
             {card.calculated_grade && <InfoRow label="등급" value={card.calculated_grade} />}
             {card.min_standard && <InfoRow label="최저" value={card.min_standard} />}
           </div>
         )}
-        {card.has_exam_date && card.exam_date && <InfoRow label="일정" value={card.exam_date} />}
+        {card.has_exam_date && card.exam_date_at && (
+          <InfoRow label="일정" value={formatDateLabel(card.exam_date_at)} />
+        )}
       </div>
 
       <RecentResultsSection years={card.recent_results ?? []} />
@@ -126,6 +152,11 @@ export const WonseoCardView = forwardRef<
       )}
 
       </div>
+      <WonseoImageLightbox
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        images={images}
+      />
     </div>
   );
 });
