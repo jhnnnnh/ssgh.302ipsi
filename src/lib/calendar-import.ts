@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import { EVENT_TYPE_DEFAULT_COLOR } from "@/lib/calendar-constants";
+import { DEFAULT_EVENT_COLOR } from "@/lib/calendar-constants";
 
 /**
  * "원서 일정 불러오기": 면접/고사 날짜가 채워진 원서 카드 중 아직 캘린더에 없는 것만
@@ -74,7 +74,7 @@ export async function importWonseoCalendarEvents({
       const cls = gradeByStudent.get(c.student_id);
       return {
         type: "wonseo_linked" as const,
-        color: EVENT_TYPE_DEFAULT_COLOR.wonseo_linked,
+        color: DEFAULT_EVENT_COLOR,
         student_id: c.student_id,
         grade: cls?.grade ?? null,
         class_no: cls?.classNo ?? null,

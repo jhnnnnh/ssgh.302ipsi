@@ -7,12 +7,8 @@ export const EVENT_TYPE_LABELS: Record<CalendarEventType, string> = {
   grade: "학년 공통",
 };
 
-export const EVENT_TYPE_DEFAULT_COLOR: Record<CalendarEventType, string> = {
-  wonseo_linked: "#378ADD",
-  personal: "#7F77DD",
-  class: "#1D9E75",
-  grade: "#D85A30",
-};
+/** 새 일정의 기본 색상. 유형과 무관하게 항상 이 색으로 시작하고, 이후 사용자가 팔레트에서 자유롭게 바꾼다. */
+export const DEFAULT_EVENT_COLOR = "#378ADD";
 
 /** 일정 추가 폼의 색상 팔레트(원형 스와치). */
 export const EVENT_COLOR_PALETTE = [

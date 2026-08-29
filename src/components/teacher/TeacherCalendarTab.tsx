@@ -23,7 +23,9 @@ export function TeacherCalendarTab() {
   const [editingEvent, setEditingEvent] = useState<ResolvedCalendarEvent | null>(null);
   const [defaultDate, setDefaultDate] = useState<string | undefined>();
 
-  const allowedTypes: CalendarEventType[] = isAdmin ? ["class", "grade"] : ["class"];
+  const allowedTypes: CalendarEventType[] = isAdmin
+    ? ["personal", "class", "grade"]
+    : ["personal", "class"];
 
   async function handleImport() {
     if (!profile || grade == null || classNo == null) return;
@@ -71,7 +73,7 @@ export function TeacherCalendarTab() {
   }
 
   function canManage(event: ResolvedCalendarEvent) {
-    if (event.type === "wonseo_linked" || event.type === "class") return true;
+    if (event.type === "wonseo_linked" || event.type === "class" || event.type === "personal") return true;
     if (event.type === "grade") return isAdmin;
     return false;
   }

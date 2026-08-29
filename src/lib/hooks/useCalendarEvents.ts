@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { EVENT_TYPE_DEFAULT_COLOR } from "@/lib/calendar-constants";
 import type { CalendarEvent } from "@/lib/database.types";
 
 export type ResolvedCalendarEvent = CalendarEvent & {
@@ -71,8 +70,4 @@ export function useCalendarEvents() {
   }, []);
 
   return { events, loading, reload };
-}
-
-export function defaultColorFor(type: CalendarEvent["type"]) {
-  return EVENT_TYPE_DEFAULT_COLOR[type];
 }

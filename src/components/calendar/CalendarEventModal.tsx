@@ -6,11 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
 import { cn } from "@/lib/cn";
-import {
-  EVENT_COLOR_PALETTE,
-  EVENT_TYPE_DEFAULT_COLOR,
-  EVENT_TYPE_LABELS,
-} from "@/lib/calendar-constants";
+import { DEFAULT_EVENT_COLOR, EVENT_COLOR_PALETTE, EVENT_TYPE_LABELS } from "@/lib/calendar-constants";
 import type { CalendarEventType } from "@/lib/database.types";
 import type { ResolvedCalendarEvent } from "@/lib/hooks/useCalendarEvents";
 
@@ -40,7 +36,7 @@ export function CalendarEventModal({
   const [type, setType] = useState<CalendarEventType>(allowedTypes[0] ?? "personal");
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
-  const [color, setColor] = useState<string>(EVENT_TYPE_DEFAULT_COLOR.personal);
+  const [color, setColor] = useState<string>(DEFAULT_EVENT_COLOR);
   const [titleError, setTitleError] = useState(false);
   const [dateError, setDateError] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -54,22 +50,16 @@ export function CalendarEventModal({
       setDate(editingEvent.resolvedDate ?? "");
       setColor(editingEvent.color);
     } else {
-      const initialType = allowedTypes[0] ?? "personal";
-      setType(initialType);
+      setType(allowedTypes[0] ?? "personal");
       setTitle("");
       setDate(defaultDate ?? "");
-      setColor(EVENT_TYPE_DEFAULT_COLOR[initialType]);
+      setColor(DEFAULT_EVENT_COLOR);
     }
     setTitleError(false);
     setDateError(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editingEvent]);
   /* eslint-enable react-hooks/set-state-in-effect */
-
-  function handleTypeChange(next: CalendarEventType) {
-    setType(next);
-    setColor(EVENT_TYPE_DEFAULT_COLOR[next]);
-  }
 
   async function handleSave() {
     if (isWonseoLinked) {
@@ -182,7 +172,7 @@ export function CalendarEventModal({
                   <button
                     key={t}
                     type="button"
-                    onClick={() => handleTypeChange(t)}
+                    onClick={() => setType(t)}
                     className={cn(
                       "py-2 rounded-xl border font-bold text-xs transition",
                       type === t

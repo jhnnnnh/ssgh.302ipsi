@@ -11,9 +11,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { getMonthGridCells, toDateString } from "@/lib/calendar-grid";
-import { EVENT_TYPE_DEFAULT_COLOR, EVENT_TYPE_LABELS, weekdayLabelClass } from "@/lib/calendar-constants";
+import { EVENT_TYPE_LABELS, weekdayLabelClass } from "@/lib/calendar-constants";
 import { WEEKDAY_KR } from "@/lib/time";
-import type { CalendarEventType } from "@/lib/database.types";
 import type { ResolvedCalendarEvent } from "@/lib/hooks/useCalendarEvents";
 
 const MAX_BADGES_PER_DAY = 2;
@@ -187,8 +186,6 @@ export function CalendarGrid({
         </div>
       </div>
 
-      <Legend />
-
       <div className="border-t border-slate-100 pt-4">
         <h4 className="text-xs font-bold text-slate-700 mb-2">{selectedDate} 일정</h4>
         {selectedEvents.length === 0 ? (
@@ -233,24 +230,6 @@ export function CalendarGrid({
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-const LEGEND_TYPES: CalendarEventType[] = ["wonseo_linked", "personal", "class", "grade"];
-
-function Legend() {
-  return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] font-bold text-slate-500">
-      {LEGEND_TYPES.map((t) => (
-        <span key={t} className="flex items-center gap-1.5">
-          <span
-            className="w-2.5 h-2.5 rounded-full shrink-0"
-            style={{ backgroundColor: EVENT_TYPE_DEFAULT_COLOR[t] }}
-          />
-          {EVENT_TYPE_LABELS[t]}
-        </span>
-      ))}
     </div>
   );
 }
