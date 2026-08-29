@@ -227,6 +227,14 @@ export type Database = {
         Args: { p_slot_id: string };
         Returns: CounselingSlot;
       };
+      current_student_grade: {
+        Args: Record<string, never>;
+        Returns: number | null;
+      };
+      current_student_class_no: {
+        Args: Record<string, never>;
+        Returns: number | null;
+      };
     };
   };
 };

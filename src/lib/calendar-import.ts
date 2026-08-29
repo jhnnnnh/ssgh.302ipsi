@@ -24,14 +24,15 @@ export async function importWonseoCalendarEvents({
   let gradeByStudent: Map<string, { grade: number; classNo: number }>;
 
   if (studentId) {
-    const { data: rosterRow } = await supabase
-      .from("roster")
-      .select("student_id, grade, class_no")
-      .eq("student_id", studentId)
-      .maybeSingle();
-    if (!rosterRow) return 0;
+    // roster 테이블은 학생에게 SELECT 권한이 없으므로(담임/관리자 전용), 학생 본인 grade/class_no는
+    // security definer RPC로 조회한다(auth.uid() 기준으로 본인 값만 반환하니 RLS 우회가 안전하다).
+    const [{ data: grade }, { data: classNo }] = await Promise.all([
+      supabase.rpc("current_student_grade"),
+      supabase.rpc("current_student_class_no"),
+    ]);
+    if (grade == null || classNo == null) return 0;
     studentIds = [studentId];
-    gradeByStudent = new Map([[studentId, { grade: rosterRow.grade!, classNo: rosterRow.class_no! }]]);
+    gradeByStudent = new Map([[studentId, { grade, classNo }]]);
   } else if (classScope) {
     const { data: rosterRows } = await supabase
       .from("roster")
