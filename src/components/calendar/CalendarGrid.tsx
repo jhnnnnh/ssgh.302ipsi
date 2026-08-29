@@ -26,6 +26,7 @@ export function CalendarGrid({
   onEditEvent,
   onDeleteEvent,
   canManageEvent,
+  showStudentName,
 }: {
   events: ResolvedCalendarEvent[];
   onImport: () => void;
@@ -34,6 +35,8 @@ export function CalendarGrid({
   onEditEvent: (event: ResolvedCalendarEvent) => void;
   onDeleteEvent: (event: ResolvedCalendarEvent) => void;
   canManageEvent: (event: ResolvedCalendarEvent) => boolean;
+  /** 교사 화면처럼 "(학생이름) (제목)" 형태로 표시할지 여부. */
+  showStudentName?: boolean;
 }) {
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -72,6 +75,10 @@ export function CalendarGrid({
 
   const selectedEvents = eventsByDate.get(selectedDate) ?? [];
   const todayStr = toDateString(today);
+
+  function displayTitle(ev: ResolvedCalendarEvent) {
+    return showStudentName && ev.studentName ? `${ev.studentName} ${ev.resolvedTitle}` : ev.resolvedTitle;
+  }
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 space-y-5">
@@ -129,11 +136,16 @@ export function CalendarGrid({
             const isSelected = cell.dateStr === selectedDate;
             const isToday = cell.dateStr === todayStr;
             return (
-              <button
+              <div
                 key={cell.dateStr}
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedDate(cell.dateStr)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") setSelectedDate(cell.dateStr);
+                }}
                 className={cn(
-                  "min-h-[72px] sm:min-h-[84px] rounded-xl border p-1.5 text-left align-top transition flex flex-col gap-1",
+                  "min-h-[72px] sm:min-h-[84px] rounded-xl border p-1.5 text-left align-top transition flex flex-col gap-1 cursor-pointer",
                   isSelected
                     ? "border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50/40"
                     : "border-slate-100 hover:border-slate-300",
@@ -152,10 +164,15 @@ export function CalendarGrid({
                   {dayEvents.slice(0, MAX_BADGES_PER_DAY).map((ev) => (
                     <div
                       key={ev.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedDate(cell.dateStr);
+                        if (canManageEvent(ev)) onEditEvent(ev);
+                      }}
                       className="text-[9px] sm:text-[10px] font-bold text-white px-1.5 py-0.5 rounded truncate"
                       style={{ backgroundColor: ev.color }}
                     >
-                      {ev.resolvedTitle}
+                      {displayTitle(ev)}
                     </div>
                   ))}
                   {dayEvents.length > MAX_BADGES_PER_DAY && (
@@ -164,7 +181,7 @@ export function CalendarGrid({
                     </div>
                   )}
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -188,10 +205,7 @@ export function CalendarGrid({
                   style={{ backgroundColor: ev.color }}
                 />
                 <span className="text-xs font-bold text-slate-800 truncate flex-1">
-                  {ev.resolvedTitle}
-                  {ev.studentName && (
-                    <span className="text-slate-400 font-semibold"> · {ev.studentName}</span>
-                  )}
+                  {displayTitle(ev)}
                 </span>
                 <span className="text-[10px] font-bold text-slate-400 shrink-0">
                   {EVENT_TYPE_LABELS[ev.type]}

@@ -94,6 +94,7 @@ export function TeacherCalendarTab() {
         onEditEvent={handleEdit}
         onDeleteEvent={handleDelete}
         canManageEvent={canManage}
+        showStudentName
       />
       <CalendarEventModal
         open={modalOpen}

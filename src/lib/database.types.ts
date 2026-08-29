@@ -88,6 +88,8 @@ export type WonseoCard = {
   exam_date: string | null;
   /** 캘린더 연동용 실제 날짜(exam_date는 시간·메모를 포함한 자유 텍스트라 별도로 둔다). */
   exam_date_at: string | null;
+  /** 일정 종류를 짧게 표시하는 메모(예: "면접", "고사"). 카드·캘린더 표기에 쓰인다. */
+  exam_memo: string | null;
   memo: string | null;
   recent_results: RecentResultYear[];
   sort_order: number;

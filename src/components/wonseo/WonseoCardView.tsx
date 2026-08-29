@@ -139,7 +139,10 @@ export const WonseoCardView = forwardRef<
           </div>
         )}
         {card.has_exam_date && card.exam_date_at && (
-          <InfoRow label="일정" value={formatDateLabel(card.exam_date_at)} />
+          <InfoRow
+            label="일정"
+            value={`${card.exam_memo ? `${card.exam_memo} ` : ""}${formatDateLabel(card.exam_date_at)}`}
+          />
         )}
       </div>
 
