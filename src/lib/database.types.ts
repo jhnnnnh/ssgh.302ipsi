@@ -280,6 +280,23 @@ export type Database = {
         Args: { p_university: string; p_department: string; p_limit?: number };
         Returns: { university: string; department: string; score: number }[];
       };
+      autocomplete_universities: {
+        Args: { p_query: string; p_limit?: number };
+        Returns: { university: string }[];
+      };
+      autocomplete_departments: {
+        Args: { p_query: string; p_university?: string | null; p_limit?: number };
+        Returns: { university: string; department: string }[];
+      };
+      autocomplete_admission_types: {
+        Args: {
+          p_query: string;
+          p_university?: string | null;
+          p_department?: string | null;
+          p_limit?: number;
+        };
+        Returns: { admission_type: string; department: string }[];
+      };
     };
   };
 };
