@@ -19,6 +19,7 @@ import {
   type CutoffCandidate,
   type CutoffMatch,
 } from "@/lib/admission-cutoff-lookup";
+import { findAdmissionMethod } from "@/lib/admission-method-lookup";
 import { emptyResultYear } from "@/components/wonseo/RecentResultsTable";
 import { buildStoragePath, deleteWonseoImageFile, uploadWonseoImage } from "@/lib/wonseo-storage";
 import {
@@ -179,13 +180,16 @@ export function WonseoCardModal({
    * 입결 데이터를 찾으면 대학교명/모집단위/모집인원/전형 유형/세부 전형명과 최근 입결 표까지
    * 한 번에 채운다. "나의 상대적 위치"는 학생이 직접 쓰는 값이라 절대 건드리지 않는다.
    */
-  function applyImportedResult(
+  async function applyImportedResult(
     matchUniversity: string,
     matchDepartment: string,
     years: CutoffMatch[],
     admissionType: string | null,
   ) {
     const desc = admissionType ? describeAdmissionType(admissionType) : null;
+    const methodMatch = desc
+      ? await findAdmissionMethod(matchUniversity, desc.category, desc.subCategory)
+      : null;
     setForm((f) => ({
       ...f,
       university: matchUniversity,
@@ -194,6 +198,10 @@ export function WonseoCardModal({
       category: desc?.category || f.category,
       subCategory: desc ? desc.subCategory : f.subCategory,
       recentResults: mergeCutoffsIntoYears(f.recentResults, years),
+      ...(methodMatch?.method
+        ? { selectionMode: "single" as const, stageSingle: methodMatch.method }
+        : {}),
+      ...(methodMatch?.min_standard ? { minStandard: methodMatch.min_standard } : {}),
     }));
     const typeLabel = admissionType ? ` ${admissionType}` : "";
     showToast(`${matchUniversity} ${matchDepartment}${typeLabel} 데이터를 불러옵니다.`, "success");
@@ -215,7 +223,7 @@ export function WonseoCardModal({
       setTypeOptions(result.options);
       return;
     }
-    applyImportedResult(matchUniversity, matchDepartment, result.years, result.admissionType);
+    await applyImportedResult(matchUniversity, matchDepartment, result.years, result.admissionType);
   }
 
   async function applyType(admissionType: string) {
@@ -228,7 +236,7 @@ export function WonseoCardModal({
       showToast("일치하는 입결 데이터를 찾을 수 없습니다. 직접 입력해주세요.", "error");
       return;
     }
-    applyImportedResult(matchUniversity, matchDepartment, matches, admissionType);
+    await applyImportedResult(matchUniversity, matchDepartment, matches, admissionType);
   }
 
   async function handleImport() {
