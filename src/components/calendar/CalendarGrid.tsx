@@ -194,7 +194,12 @@ export function CalendarGrid({
                         )}
                         style={{
                           backgroundColor: ev.color,
-                          ...(connectRight ? { marginRight: "-1.125rem", zIndex: 10 } : undefined),
+                          // 셀 오른쪽 padding(0.375rem) + gap(0.25rem) + 셀 테두리(1px) + 다음 셀
+                          // padding(0.375rem) + 다음 셀 테두리(1px)를 정확히 메운다. 글자 크기 배율에
+                          // 따라 rem 기준 폰트 크기가 바뀌므로 rem/px를 섞지 않고 calc로 그대로 더한다.
+                          ...(connectRight
+                            ? { marginRight: "calc(-1rem - 2px)", zIndex: 10 }
+                            : undefined),
                         }}
                       >
                         {connectLeft ? " " : displayTitle(ev)}
