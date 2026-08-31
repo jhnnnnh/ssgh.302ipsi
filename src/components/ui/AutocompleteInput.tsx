@@ -12,8 +12,8 @@ export type AutocompleteOption = {
   hint?: string;
 };
 
-const DEBOUNCE_MS = 250;
-const MAX_OPTIONS = 6;
+const DEBOUNCE_MS = 150;
+const MAX_OPTIONS = 20;
 
 /**
  * 자유 입력을 그대로 두면서(강제 선택 아님) 보조로 추천 목록을 보여주는 입력 칸.
@@ -119,7 +119,7 @@ export const AutocompleteInput = forwardRef<
         className={className}
       />
       {open && options.length > 0 && (
-        <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto py-1">
+        <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-72 overflow-y-auto py-1">
           {options.map((opt, i) => (
             <button
               type="button"

@@ -11,6 +11,7 @@ import { RecentResultsEditor, type ImportedCardFields } from "@/components/wonse
 import { emptyResultYear } from "@/components/wonseo/RecentResultsTable";
 import { buildStoragePath, deleteWonseoImageFile, uploadWonseoImage } from "@/lib/wonseo-storage";
 import {
+  prefetchUniversities,
   searchAdmissionTypes,
   searchDepartments,
   searchUniversities,
@@ -132,6 +133,7 @@ export function WonseoCardModal({
 
   useEffect(() => {
     if (!open) return;
+    prefetchUniversities();
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm(
       editingCard
