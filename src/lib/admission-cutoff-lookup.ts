@@ -79,13 +79,15 @@ function buildTypeOptions(rows: CutoffRow[], preferredTrack?: "교과" | "종합
 }
 
 export type ExactLookupResult =
-  | { kind: "matched"; years: CutoffMatch[] }
+  | { kind: "matched"; years: CutoffMatch[]; admissionType: string | null }
   | { kind: "choose_type"; options: AdmissionTypeOption[] }
   | { kind: "none" };
 
 /**
  * 대학교명 + 모집단위로 정확히 일치하는 입결을 찾는다. 같은 학과·같은 연도에 전형이
- * 여러 개 걸리면 자동으로 하나를 고르지 않고, 학생이 전형을 직접 선택하게 한다.
+ * 여러 개 걸리면 자동으로 하나를 고르지 않고 학생이 전형을 직접 선택하게 한다. 전형이 하나뿐이어도
+ * 그게 카드의 전형 유형(교과/종합)과 다른 트랙이면 — 예: 종합으로 지원하는데 교과 데이터만 있는 경우 —
+ * 다른 트랙 값을 조용히 채우면 안 되니 마찬가지로 선택하게 한다.
  */
 export async function fetchExactCutoffs(
   university: string,
@@ -94,8 +96,12 @@ export async function fetchExactCutoffs(
 ): Promise<ExactLookupResult> {
   const rows = await fetchCutoffRows(university, department);
   if (rows.length === 0) return { kind: "none" };
-  if (isAmbiguous(rows)) return { kind: "choose_type", options: buildTypeOptions(rows, preferredTrack) };
-  return { kind: "matched", years: toRecentYears(rows) };
+
+  const trackMismatch = preferredTrack != null && !rows.some((r) => r.track === preferredTrack);
+  if (isAmbiguous(rows) || trackMismatch) {
+    return { kind: "choose_type", options: buildTypeOptions(rows, preferredTrack) };
+  }
+  return { kind: "matched", years: toRecentYears(rows), admissionType: rows[0]?.admission_type ?? null };
 }
 
 /** 학생이 전형을 직접 고른 뒤, 그 전형의 최근 3개년 입결만 가져온다. */

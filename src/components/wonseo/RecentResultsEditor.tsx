@@ -70,12 +70,14 @@ export function RecentResultsEditor({
       return;
     }
     onChange(mergeCutoffsIntoYears(years, result.years));
-    showToast(`${result.years.length}개 연도의 입결을 불러왔습니다.`, "success");
+    const typeLabel = result.admissionType ? ` ${result.admissionType}` : "";
+    showToast(`${matchUniversity} ${matchDepartment}${typeLabel} 데이터를 불러옵니다.`, "success");
   }
 
   async function applyType(admissionType: string) {
     if (!pendingMatch) return;
     const matches = await fetchCutoffsForType(pendingMatch.university, pendingMatch.department, admissionType);
+    const { university: matchUniversity, department: matchDepartment } = pendingMatch;
     setTypeOptions(null);
     setPendingMatch(null);
     if (matches.length === 0) {
@@ -83,7 +85,7 @@ export function RecentResultsEditor({
       return;
     }
     onChange(mergeCutoffsIntoYears(years, matches));
-    showToast(`${matches.length}개 연도의 입결을 불러왔습니다.`, "success");
+    showToast(`${matchUniversity} ${matchDepartment} ${admissionType} 데이터를 불러옵니다.`, "success");
   }
 
   async function handleImport() {
@@ -217,10 +219,24 @@ export function RecentResultsEditor({
         title="전형을 선택해 주세요"
         maxWidth="max-w-sm"
       >
-        <p className="text-[11px] text-slate-400">
-          {pendingMatch?.university} · {pendingMatch?.department}에 전형이 여러 개 있어요. 지원하는
-          전형을 선택해 주세요.
-        </p>
+        {(() => {
+          const myTrack = trackFromCategory(category);
+          const hasMyTrack = typeOptions?.some((o) => o.track === myTrack);
+          if (myTrack && typeOptions && !hasMyTrack) {
+            return (
+              <p className="text-[11px] text-rose-500 font-bold">
+                이 학과는 &ldquo;{category}&rdquo;(으)로 등록된 입결이 없어요. 다른 전형 데이터를
+                참고용으로만 보여드려요 — 정확한 값이 아닐 수 있어요.
+              </p>
+            );
+          }
+          return (
+            <p className="text-[11px] text-slate-400">
+              {pendingMatch?.university} · {pendingMatch?.department}에 전형이 여러 개 있어요. 지원하는
+              전형을 선택해 주세요.
+            </p>
+          );
+        })()}
         <div className="space-y-1.5 max-h-64 overflow-y-auto">
           {typeOptions?.map((opt) => (
             <button
