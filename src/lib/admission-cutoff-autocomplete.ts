@@ -82,7 +82,7 @@ export async function searchDepartments(query: string, university: string): Prom
     }));
 }
 
-type TypeRow = { admission_type: string; department: string };
+type TypeRow = { admission_type: string; department: string; track: string | null };
 const typeCache = new Map<string, TypeRow[]>();
 const typePromises = new Map<string, Promise<TypeRow[]>>();
 
@@ -112,20 +112,22 @@ function loadAdmissionTypes(university: string, department: string): Promise<Typ
 /**
  * 세부 전형명 자동완성. university+department가 다 채워져 있으면 그 조합에 실제로 있는
  * 전형명만, university만 있으면 그 대학 전체 전형명(후보 옆에 학과명 표시)을 보여준다.
- * university 자체가 없으면 호출하지 않는 게 맞다(자유 입력만 허용).
+ * university 자체가 없으면 호출하지 않는 게 맞다(자유 입력만 허용). 전형 유형에서 교과/종합을
+ * 골랐으면 track으로도 걸러서, 학생이 고른 유형과 안 맞는 전형명은 애초에 후보에서 뺀다.
+ * 세부 전형은 종류가 몇 개 안 되므로 query가 비어 있어도(빈칸을 누른 시점) 전체 후보를 보여준다.
  */
 export async function searchAdmissionTypes(
   query: string,
   university: string,
   department: string,
+  track?: "교과" | "종합",
 ): Promise<AutocompleteOption[]> {
   const q = query.trim();
-  if (!q) return [];
   const trimmedUni = university.trim();
   const trimmedDept = department.trim();
   const all = await loadAdmissionTypes(trimmedUni, trimmedDept);
   return all
-    .filter((r) => r.admission_type.includes(q))
+    .filter((r) => (!q || r.admission_type.includes(q)) && (!track || r.track === track))
     .map((r) => ({
       value: r.admission_type,
       label: r.admission_type,

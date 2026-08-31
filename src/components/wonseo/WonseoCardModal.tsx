@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
 import { WonseoImageThumb } from "@/components/wonseo/WonseoImageThumb";
 import { RecentResultsEditor, type ImportedCardFields } from "@/components/wonseo/RecentResultsEditor";
+import { trackFromCategory } from "@/lib/admission-cutoff-lookup";
 import { emptyResultYear } from "@/components/wonseo/RecentResultsTable";
 import { buildStoragePath, deleteWonseoImageFile, uploadWonseoImage } from "@/lib/wonseo-storage";
 import {
@@ -342,8 +343,8 @@ export function WonseoCardModal({
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="sm:col-span-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
           <label className="block font-bold text-slate-700 mb-1">
             대학교명 {universityError && <span className="text-rose-500">(필수)</span>}
           </label>
@@ -371,16 +372,6 @@ export function WonseoCardModal({
             onChange={(v) => set("department", v)}
             onSearch={(q) => searchDepartments(q, form.university)}
             placeholder="OO학과 또는 OO학부"
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block font-bold text-slate-700 mb-1">모집인원</label>
-          <input
-            value={form.enrollment}
-            onChange={(e) => set("enrollment", e.target.value.replace(/[^0-9]/g, ""))}
-            inputMode="numeric"
-            placeholder="예: 10"
             className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
@@ -435,9 +426,16 @@ export function WonseoCardModal({
             onChange={(v) => set("subCategory", v)}
             onSearch={
               form.university.trim()
-                ? (q) => searchAdmissionTypes(q, form.university, form.department)
+                ? (q) =>
+                    searchAdmissionTypes(
+                      q,
+                      form.university,
+                      form.department,
+                      trackFromCategory(form.category),
+                    )
                 : undefined
             }
+            revealOnFocus
             placeholder="예: 지역균형전형 / 일반전형"
             className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
@@ -500,7 +498,17 @@ export function WonseoCardModal({
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label className="block font-bold text-slate-700 mb-1">모집인원</label>
+          <input
+            value={form.enrollment}
+            onChange={(e) => set("enrollment", e.target.value.replace(/[^0-9]/g, ""))}
+            inputMode="numeric"
+            placeholder="예: 10"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
         <div>
           <label className="block font-bold text-slate-700 mb-1">대학별 산출 등급</label>
           <input

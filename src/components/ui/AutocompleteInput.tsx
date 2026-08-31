@@ -27,8 +27,13 @@ export const AutocompleteInput = forwardRef<
     onSearch?: (query: string) => Promise<AutocompleteOption[]>;
     placeholder?: string;
     className?: string;
+    /** 후보가 몇 개 안 될 때: 아무것도 입력하지 않고 포커스만 줘도 전체 후보를 바로 보여준다. */
+    revealOnFocus?: boolean;
   }
->(function AutocompleteInput({ value, onChange, onSearch, placeholder, className }, ref) {
+>(function AutocompleteInput(
+  { value, onChange, onSearch, placeholder, className, revealOnFocus },
+  ref,
+) {
   const [options, setOptions] = useState<AutocompleteOption[]>([]);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -54,7 +59,7 @@ export const AutocompleteInput = forwardRef<
 
   function runSearch(query: string) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!onSearch || query.trim().length === 0) {
+    if (!onSearch || (!revealOnFocus && query.trim().length === 0)) {
       setOptions([]);
       setOpen(false);
       return;
@@ -113,7 +118,7 @@ export const AutocompleteInput = forwardRef<
         value={value}
         onChange={(e) => handleInputChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        onFocus={() => options.length > 0 && setOpen(true)}
+        onFocus={() => (revealOnFocus ? runSearch(value) : options.length > 0 && setOpen(true))}
         placeholder={placeholder}
         autoComplete="off"
         className={className}

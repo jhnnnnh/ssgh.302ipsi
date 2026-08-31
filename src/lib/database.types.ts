@@ -295,7 +295,7 @@ export type Database = {
           p_department?: string | null;
           p_limit?: number;
         };
-        Returns: { admission_type: string; department: string }[];
+        Returns: { admission_type: string; department: string; track: string | null }[];
       };
     };
   };
