@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { WonseoCardView } from "@/components/wonseo/WonseoCardView";
-import type { RankMode, WonseoCard } from "@/lib/database.types";
+import type { WonseoCard } from "@/lib/database.types";
 
 export function SortableWonseoCard({
   id,
@@ -15,8 +15,6 @@ export function SortableWonseoCard({
   minHeight,
   setEqualHeightRef,
   isDragging,
-  rankLabel,
-  onRankUpdate,
 }: {
   id: string;
   card: WonseoCard;
@@ -26,8 +24,6 @@ export function SortableWonseoCard({
   minHeight?: number;
   setEqualHeightRef: (el: HTMLElement | null) => void;
   isDragging: boolean;
-  rankLabel: string;
-  onRankUpdate: (patch: { rank_mode: RankMode; rank?: string | null }) => void | Promise<void>;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
@@ -41,8 +37,6 @@ export function SortableWonseoCard({
       showStatus={showStatus}
       onEdit={onEdit}
       onDelete={onDelete}
-      rankLabel={rankLabel}
-      onRankUpdate={onRankUpdate}
       minHeight={minHeight}
       style={{
         transform: CSS.Transform.toString(transform),

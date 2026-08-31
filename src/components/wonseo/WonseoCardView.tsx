@@ -6,10 +6,9 @@ import { createClient } from "@/lib/supabase/client";
 import { WonseoAttachmentPreview } from "@/components/wonseo/WonseoAttachmentPreview";
 import { WonseoImageLightbox } from "@/components/wonseo/WonseoImageLightbox";
 import { RecentResultsSection } from "@/components/wonseo/RecentResultsSection";
-import { RankBadge } from "@/components/wonseo/RankBadge";
 import { LEVEL_EMPHASIS_STYLE, STATUS_BADGE_STYLE, STATUS_OPTIONS } from "@/lib/wonseo-constants";
 import { formatDateLabel } from "@/lib/time";
-import type { RankMode, WonseoCard, WonseoImage } from "@/lib/database.types";
+import type { WonseoCard, WonseoImage } from "@/lib/database.types";
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -31,12 +30,9 @@ export const WonseoCardView = forwardRef<
     style?: React.CSSProperties;
     className?: string;
     dragHandle?: React.ReactNode;
-    /** 이 카드에 보여줄 지망 순위 라벨(형제 카드들과 함께 계산되므로 부모가 넘겨준다). */
-    rankLabel?: string;
-    onRankUpdate?: (patch: { rank_mode: RankMode; rank?: string | null }) => void | Promise<void>;
   }
 >(function WonseoCardView(
-  { card, showStatus, onEdit, onDelete, minHeight, style, className, dragHandle, rankLabel, onRankUpdate },
+  { card, showStatus, onEdit, onDelete, minHeight, style, className, dragHandle },
   ref,
 ) {
   const [images, setImages] = useState<WonseoImage[]>([]);
@@ -73,7 +69,7 @@ export const WonseoCardView = forwardRef<
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           {dragHandle}
-          <RankBadge card={card} label={rankLabel ?? "미지정"} onUpdate={onRankUpdate ?? (() => {})} />
+          <span className="text-[11px] font-bold text-slate-900">{card.rank || "지망 미지정"}</span>
           <span
             className={`text-[11px] font-bold px-2.5 py-1 rounded-lg ${emphasis.badge}`}
           >
