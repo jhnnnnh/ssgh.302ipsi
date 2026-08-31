@@ -11,21 +11,21 @@ export type CutoffMatch = {
   grade_70: string | null;
 };
 
+type CutoffRow = CutoffMatch & { track: string | null; admission_type: string | null };
+
 export type CutoffCandidate = { university: string; department: string; score: number };
+
+/** 같은 학과 안에서 고를 수 있는 전형 하나 — 가장 최근 연도 값을 미리보기로 같이 보여준다. */
+export type AdmissionTypeOption = {
+  admissionType: string;
+  track: string | null;
+  preview: CutoffMatch;
+};
 
 const RECENT_YEARS = 3;
 
-/**
- * 대학교명 + 모집단위가 정확히 일치하는 입결을 최근 연도순으로 가져온다.
- * 원본 데이터는 같은 학과라도 연도마다 전형(교과/지역인재/종합 등)이 여러 줄로 나뉘어
- * 있어서, 한 연도에 여러 행이 걸릴 수 있다 — 카드의 전형 유형(교과/종합)과 같은 트랙을
- * 우선으로, 그마저 없으면 첫 번째 행으로 연도당 한 줄만 남긴다.
- */
-export async function fetchExactCutoffs(
-  university: string,
-  department: string,
-  preferredTrack?: "교과" | "종합",
-): Promise<CutoffMatch[]> {
+/** 대학교명 + 모집단위가 정확히 일치하는 입결 원본 행을 전부 가져온다(연도별로 안 묶은 상태). */
+async function fetchCutoffRows(university: string, department: string): Promise<CutoffRow[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("admission_cutoffs")
@@ -35,28 +35,80 @@ export async function fetchExactCutoffs(
     .eq("admission_period", "수시")
     .order("year", { ascending: false })
     .order("admission_type", { ascending: true });
-
-  const rows = data ?? [];
-  const byYear = new Map<number, (typeof rows)[number]>();
-  for (const row of rows) {
-    const current = byYear.get(row.year);
-    if (!current) {
-      byYear.set(row.year, row);
-    } else if (preferredTrack && current.track !== preferredTrack && row.track === preferredTrack) {
-      byYear.set(row.year, row);
-    }
-  }
-
-  return Array.from(byYear.values())
-    .sort((a, b) => b.year - a.year)
-    .slice(0, RECENT_YEARS);
+  return data ?? [];
 }
 
-/** wonseo 카드의 전형 유형 문자열을 admission_cutoffs.track 값으로 변환한다. */
+/** 같은 연도에 전형이 두 개 이상 걸리는 행이 하나라도 있으면 학생에게 전형을 직접 고르게 한다. */
+function isAmbiguous(rows: CutoffRow[]): boolean {
+  const perYear = new Map<number, number>();
+  for (const row of rows) perYear.set(row.year, (perYear.get(row.year) ?? 0) + 1);
+  return [...perYear.values()].some((count) => count > 1);
+}
+
+/** 전형이 겹치지 않는 경우 그대로 최근 3개년으로 정리한다. */
+function toRecentYears(rows: CutoffRow[]): CutoffMatch[] {
+  const byYear = new Map<number, CutoffRow>();
+  for (const row of rows) if (!byYear.has(row.year)) byYear.set(row.year, row);
+  return [...byYear.values()].sort((a, b) => b.year - a.year).slice(0, RECENT_YEARS);
+}
+
+/** wonseo 카드의 전형 유형 문자열을 admission_cutoffs.track 값으로 변환한다(추천 표시용). */
 export function trackFromCategory(category: string): "교과" | "종합" | undefined {
   if (category.includes("교과")) return "교과";
   if (category.includes("종합")) return "종합";
   return undefined;
+}
+
+/** 전형 목록(중복 없이) — 카드의 전형 유형과 같은 트랙을 앞쪽에 정렬해서 고르기 쉽게 한다. */
+function buildTypeOptions(rows: CutoffRow[], preferredTrack?: "교과" | "종합"): AdmissionTypeOption[] {
+  const byType = new Map<string, CutoffRow>();
+  for (const row of rows) {
+    if (!row.admission_type) continue;
+    if (!byType.has(row.admission_type)) byType.set(row.admission_type, row);
+  }
+  return [...byType.values()]
+    .sort((a, b) => {
+      if (preferredTrack) {
+        const aMatch = a.track === preferredTrack ? 0 : 1;
+        const bMatch = b.track === preferredTrack ? 0 : 1;
+        if (aMatch !== bMatch) return aMatch - bMatch;
+      }
+      return (a.admission_type ?? "").localeCompare(b.admission_type ?? "");
+    })
+    .map((row) => ({ admissionType: row.admission_type!, track: row.track, preview: row }));
+}
+
+export type ExactLookupResult =
+  | { kind: "matched"; years: CutoffMatch[] }
+  | { kind: "choose_type"; options: AdmissionTypeOption[] }
+  | { kind: "none" };
+
+/**
+ * 대학교명 + 모집단위로 정확히 일치하는 입결을 찾는다. 같은 학과·같은 연도에 전형이
+ * 여러 개 걸리면 자동으로 하나를 고르지 않고, 학생이 전형을 직접 선택하게 한다.
+ */
+export async function fetchExactCutoffs(
+  university: string,
+  department: string,
+  preferredTrack?: "교과" | "종합",
+): Promise<ExactLookupResult> {
+  const rows = await fetchCutoffRows(university, department);
+  if (rows.length === 0) return { kind: "none" };
+  if (isAmbiguous(rows)) return { kind: "choose_type", options: buildTypeOptions(rows, preferredTrack) };
+  return { kind: "matched", years: toRecentYears(rows) };
+}
+
+/** 학생이 전형을 직접 고른 뒤, 그 전형의 최근 3개년 입결만 가져온다. */
+export async function fetchCutoffsForType(
+  university: string,
+  department: string,
+  admissionType: string,
+): Promise<CutoffMatch[]> {
+  const rows = await fetchCutoffRows(university, department);
+  return rows
+    .filter((r) => r.admission_type === admissionType)
+    .sort((a, b) => b.year - a.year)
+    .slice(0, RECENT_YEARS);
 }
 
 /** 정확히 일치하는 게 없을 때 이름이 비슷한 (대학, 학과) 후보를 찾는다. */

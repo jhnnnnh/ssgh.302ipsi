@@ -6,10 +6,12 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/providers/ToastProvider";
 import { RESULT_ROWS, emptyResultYear } from "@/components/wonseo/RecentResultsTable";
 import {
+  fetchCutoffsForType,
   fetchExactCutoffs,
   mergeCutoffsIntoYears,
   searchCutoffCandidates,
   trackFromCategory,
+  type AdmissionTypeOption,
   type CutoffCandidate,
 } from "@/lib/admission-cutoff-lookup";
 import type { RecentResultYear } from "@/lib/database.types";
@@ -33,6 +35,10 @@ export function RecentResultsEditor({
   const showToast = useToast();
   const [importing, setImporting] = useState(false);
   const [candidates, setCandidates] = useState<CutoffCandidate[] | null>(null);
+  const [typeOptions, setTypeOptions] = useState<AdmissionTypeOption[] | null>(null);
+  const [pendingMatch, setPendingMatch] = useState<{ university: string; department: string } | null>(
+    null,
+  );
 
   function updateCell(index: number, key: keyof RecentResultYear, value: string) {
     onChange(years.map((y, i) => (i === index ? { ...y, [key]: value } : y)));
@@ -47,8 +53,31 @@ export function RecentResultsEditor({
     onChange(years.filter((_, i) => i !== index));
   }
 
-  async function applyMatch(matchUniversity: string, matchDepartment: string) {
-    const matches = await fetchExactCutoffs(matchUniversity, matchDepartment, trackFromCategory(category));
+  async function resolveMatch(matchUniversity: string, matchDepartment: string) {
+    const result = await fetchExactCutoffs(matchUniversity, matchDepartment, trackFromCategory(category));
+    if (result.kind === "none") {
+      const found = await searchCutoffCandidates(matchUniversity, matchDepartment);
+      if (found.length === 0) {
+        showToast("일치하는 입결 데이터를 찾을 수 없습니다. 직접 입력해주세요.", "error");
+        return;
+      }
+      setCandidates(found);
+      return;
+    }
+    if (result.kind === "choose_type") {
+      setPendingMatch({ university: matchUniversity, department: matchDepartment });
+      setTypeOptions(result.options);
+      return;
+    }
+    onChange(mergeCutoffsIntoYears(years, result.years));
+    showToast(`${result.years.length}개 연도의 입결을 불러왔습니다.`, "success");
+  }
+
+  async function applyType(admissionType: string) {
+    if (!pendingMatch) return;
+    const matches = await fetchCutoffsForType(pendingMatch.university, pendingMatch.department, admissionType);
+    setTypeOptions(null);
+    setPendingMatch(null);
     if (matches.length === 0) {
       showToast("일치하는 입결 데이터를 찾을 수 없습니다. 직접 입력해주세요.", "error");
       return;
@@ -67,19 +96,7 @@ export function RecentResultsEditor({
 
     setImporting(true);
     try {
-      const exact = await fetchExactCutoffs(uni, dept, trackFromCategory(category));
-      if (exact.length > 0) {
-        onChange(mergeCutoffsIntoYears(years, exact));
-        showToast(`${exact.length}개 연도의 입결을 불러왔습니다.`, "success");
-        return;
-      }
-
-      const found = await searchCutoffCandidates(uni, dept);
-      if (found.length === 0) {
-        showToast("일치하는 입결 데이터를 찾을 수 없습니다. 직접 입력해주세요.", "error");
-        return;
-      }
-      setCandidates(found);
+      await resolveMatch(uni, dept);
     } catch {
       showToast("입결 데이터를 불러오지 못했습니다.", "error");
     } finally {
@@ -180,12 +197,43 @@ export function RecentResultsEditor({
               type="button"
               onClick={async () => {
                 setCandidates(null);
-                await applyMatch(c.university, c.department);
+                await resolveMatch(c.university, c.department);
               }}
               className="w-full text-left px-3 py-2 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl transition"
             >
               <span className="font-bold text-slate-800">{c.university}</span>
               <span className="text-slate-500"> · {c.department}</span>
+            </button>
+          ))}
+        </div>
+      </Modal>
+
+      <Modal
+        open={typeOptions != null}
+        onClose={() => {
+          setTypeOptions(null);
+          setPendingMatch(null);
+        }}
+        title="전형을 선택해 주세요"
+        maxWidth="max-w-sm"
+      >
+        <p className="text-[11px] text-slate-400">
+          {pendingMatch?.university} · {pendingMatch?.department}에 전형이 여러 개 있어요. 지원하는
+          전형을 선택해 주세요.
+        </p>
+        <div className="space-y-1.5 max-h-64 overflow-y-auto">
+          {typeOptions?.map((opt) => (
+            <button
+              key={opt.admissionType}
+              type="button"
+              onClick={() => applyType(opt.admissionType)}
+              className="w-full text-left px-3 py-2 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl transition"
+            >
+              <div className="font-bold text-slate-800">{opt.admissionType}</div>
+              <div className="text-slate-400 text-[10px] mt-0.5">
+                {opt.preview.year}학년도 · 모집 {opt.preview.enrollment ?? "-"}명 · 경쟁률{" "}
+                {opt.preview.competition_rate ?? "-"}
+              </div>
             </button>
           ))}
         </div>
