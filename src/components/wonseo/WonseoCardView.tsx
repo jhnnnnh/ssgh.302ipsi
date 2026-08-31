@@ -14,7 +14,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <p>
       <span className="text-slate-500">{label} </span>
-      <span className="font-semibold text-slate-800">{value}</span>
+      <span className="font-semibold text-slate-800 whitespace-pre-line">{value}</span>
     </p>
   );
 }

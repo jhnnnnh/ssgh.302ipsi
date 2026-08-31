@@ -20,6 +20,7 @@ import {
   type CutoffMatch,
 } from "@/lib/admission-cutoff-lookup";
 import { findAdmissionMethod } from "@/lib/admission-method-lookup";
+import { summarizeMinStandard } from "@/lib/min-standard-format";
 import { emptyResultYear } from "@/components/wonseo/RecentResultsTable";
 import { buildStoragePath, deleteWonseoImageFile, uploadWonseoImage } from "@/lib/wonseo-storage";
 import {
@@ -201,7 +202,9 @@ export function WonseoCardModal({
       ...(methodMatch?.method
         ? { selectionMode: "single" as const, stageSingle: methodMatch.method }
         : {}),
-      ...(methodMatch?.min_standard ? { minStandard: methodMatch.min_standard } : {}),
+      ...(methodMatch?.min_standard
+        ? { minStandard: summarizeMinStandard(methodMatch.min_standard) ?? methodMatch.min_standard }
+        : {}),
     }));
     const typeLabel = admissionType ? ` ${admissionType}` : "";
     showToast(`${matchUniversity} ${matchDepartment}${typeLabel} 데이터를 불러옵니다.`, "success");
@@ -596,6 +599,16 @@ export function WonseoCardModal({
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
+          <label className="block font-bold text-slate-700 mb-1">수능 최저학력기준</label>
+          <textarea
+            value={form.minStandard}
+            onChange={(e) => set("minStandard", e.target.value)}
+            rows={2}
+            placeholder="2합5 / 없음"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
+          />
+        </div>
+        <div>
           <label className="block font-bold text-slate-700 mb-1">모집인원</label>
           <input
             value={form.enrollment}
@@ -611,15 +624,6 @@ export function WonseoCardModal({
             value={form.calculatedGrade}
             onChange={(e) => set("calculatedGrade", e.target.value)}
             placeholder="1.00 또는 970점"
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block font-bold text-slate-700 mb-1">수능 최저학력기준</label>
-          <input
-            value={form.minStandard}
-            onChange={(e) => set("minStandard", e.target.value)}
-            placeholder="2개 합 5 이내 / 없음"
             className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
