@@ -15,6 +15,9 @@ export function SortableWonseoCard({
   minHeight,
   setEqualHeightRef,
   isDragging,
+  autoAssign,
+  rankLabel,
+  onRankChange,
 }: {
   id: string;
   card: WonseoCard;
@@ -24,6 +27,9 @@ export function SortableWonseoCard({
   minHeight?: number;
   setEqualHeightRef: (el: HTMLElement | null) => void;
   isDragging: boolean;
+  autoAssign: boolean;
+  rankLabel: string;
+  onRankChange: (text: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
@@ -37,6 +43,9 @@ export function SortableWonseoCard({
       showStatus={showStatus}
       onEdit={onEdit}
       onDelete={onDelete}
+      autoAssign={autoAssign}
+      rankLabel={rankLabel}
+      onRankChange={onRankChange}
       minHeight={minHeight}
       style={{
         transform: CSS.Transform.toString(transform),

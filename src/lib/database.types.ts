@@ -24,6 +24,9 @@ export type Roster = {
   name: string;
   grade: number;
   class_no: number;
+  /** 이 학생의 원서 카드 목록에서 지망 순위를 드래그 순서로 자동 계산할지(켜짐, 기본값)
+   *  각 카드마다 직접 텍스트로 입력할지(꺼짐)를 결정한다. */
+  rank_auto_assign: boolean;
   created_at: string;
 };
 

@@ -18,7 +18,7 @@ import {
   rectSortingStrategy,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import { Eye, EyeOff, FileSpreadsheet, GraduationCap, LayoutGrid, Plus, Table2 } from "lucide-react";
+import { Eye, EyeOff, FileSpreadsheet, GraduationCap, LayoutGrid, Plus, Table2, Wand2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
@@ -26,12 +26,14 @@ import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { useRoster } from "@/lib/hooks/useRoster";
 import { useStatusReveal } from "@/lib/hooks/useStatusReveal";
 import { useEqualHeights } from "@/lib/hooks/useEqualHeights";
+import { useRankAutoAssign } from "@/lib/hooks/useRankAutoAssign";
 import { useActiveClass } from "@/components/providers/ActiveClassProvider";
 import { SortableWonseoCard } from "@/components/wonseo/SortableWonseoCard";
 import { WonseoCardView } from "@/components/wonseo/WonseoCardView";
 import { WonseoCardModal } from "@/components/wonseo/WonseoCardModal";
 import { WonseoTableView } from "@/components/teacher/WonseoTableView";
 import { exportWonseoExcel } from "@/lib/wonseo-excel";
+import { computeAutoRankLabels } from "@/lib/wonseo-rank";
 import type { WonseoCard } from "@/lib/database.types";
 
 type ViewMode = "cards" | "table";
@@ -42,9 +44,10 @@ export function WonseoManageTab() {
   const { roster } = useRoster();
   const { enabled: statusVisible, toggle } = useStatusReveal();
   const { isAdmin } = useActiveClass();
+  const [selectedStudentId, setSelectedStudentId] = useState("");
+  const { autoAssign, setAutoAssign } = useRankAutoAssign(selectedStudentId);
 
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
-  const [selectedStudentId, setSelectedStudentId] = useState("");
   const [cards, setCards] = useState<WonseoCard[]>([]);
   const [allCards, setAllCards] = useState<WonseoCard[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -148,6 +151,58 @@ export function WonseoManageTab() {
     }
   }
 
+  async function handleRankTextChange(card: WonseoCard, text: string) {
+    const value = text.trim() || null;
+    if (value === card.rank) return;
+    const { error } = await supabase.from("wonseo_cards").update({ rank: value }).eq("id", card.id);
+    if (error) {
+      showToast("지망 순위 저장에 실패했습니다.", "error");
+      return;
+    }
+    reload(selectedStudentId);
+  }
+
+  async function handleToggleAutoAssign() {
+    if (autoAssign) {
+      const labels = computeAutoRankLabels(cards);
+      const results = await Promise.all(
+        cards.map((card, i) =>
+          supabase.from("wonseo_cards").update({ rank: labels[i] }).eq("id", card.id),
+        ),
+      );
+      if (results.some((r) => r.error)) {
+        showToast("전환에 실패했습니다.", "error");
+        return;
+      }
+      const { error } = await supabase
+        .from("roster")
+        .update({ rank_auto_assign: false })
+        .eq("student_id", selectedStudentId);
+      if (error) {
+        showToast("전환에 실패했습니다.", "error");
+        return;
+      }
+      setAutoAssign(false);
+      reload(selectedStudentId);
+    } else {
+      const ok = await confirm({
+        message: "자동 배정으로 전환하면 직접 입력한 지망 값이 초기화됩니다. 계속할까요?",
+        confirmLabel: "전환",
+        danger: true,
+      });
+      if (!ok) return;
+      const { error } = await supabase
+        .from("roster")
+        .update({ rank_auto_assign: true })
+        .eq("student_id", selectedStudentId);
+      if (error) {
+        showToast("전환에 실패했습니다.", "error");
+        return;
+      }
+      setAutoAssign(true);
+    }
+  }
+
   async function handleExportExcel() {
     setExporting(true);
     const { data, error } = await supabase.from("wonseo_cards").select("*");
@@ -174,6 +229,7 @@ export function WonseoManageTab() {
   }
 
   const activeCard = cards.find((c) => c.id === activeId) ?? null;
+  const rankLabels = computeAutoRankLabels(cards);
 
   return (
     <div className="space-y-6">
@@ -241,13 +297,27 @@ export function WonseoManageTab() {
                 </select>
               </div>
               {selectedStudentId && (
-                <button
-                  onClick={openCreate}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition shadow-2xs flex items-center gap-1.5 shrink-0"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>수시 원서 추가</span>
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={handleToggleAutoAssign}
+                    className={cn(
+                      "px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5",
+                      autoAssign
+                        ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-600",
+                    )}
+                  >
+                    <Wand2 className="w-3.5 h-3.5" />
+                    <span>지망 순위 자동 배정</span>
+                  </button>
+                  <button
+                    onClick={openCreate}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition shadow-2xs flex items-center gap-1.5"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>수시 원서 추가</span>
+                  </button>
+                </div>
               )}
             </div>
 
@@ -270,6 +340,9 @@ export function WonseoManageTab() {
                           minHeight={maxHeight}
                           isDragging={activeId === card.id}
                           card={card}
+                          autoAssign={autoAssign}
+                          rankLabel={rankLabels[index]}
+                          onRankChange={(text) => handleRankTextChange(card, text)}
                           showStatus={statusVisible}
                           onEdit={() => openEdit(card)}
                           onDelete={() => handleDelete(card)}
@@ -282,6 +355,8 @@ export function WonseoManageTab() {
                       <div className="shadow-2xl shadow-indigo-900/30 rounded-3xl rotate-1 scale-[1.03]">
                         <WonseoCardView
                           card={activeCard}
+                          autoAssign={autoAssign}
+                          rankLabel={rankLabels[cards.findIndex((c) => c.id === activeCard.id)]}
                           showStatus={statusVisible}
                           onEdit={() => {}}
                           onDelete={() => {}}

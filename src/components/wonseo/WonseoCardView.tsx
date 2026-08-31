@@ -30,9 +30,26 @@ export const WonseoCardView = forwardRef<
     style?: React.CSSProperties;
     className?: string;
     dragHandle?: React.ReactNode;
+    /** 지망 순위 자동 배정이 켜져 있을 때 보여줄, 카드 위치로 계산된 라벨(예: "1지망"). */
+    autoAssign?: boolean;
+    rankLabel?: string;
+    /** 자동 배정이 꺼져 있을 때 학생/교사가 직접 입력한 텍스트가 바뀌면(blur 시) 저장한다. */
+    onRankChange?: (text: string) => void;
   }
 >(function WonseoCardView(
-  { card, showStatus, onEdit, onDelete, minHeight, style, className, dragHandle },
+  {
+    card,
+    showStatus,
+    onEdit,
+    onDelete,
+    minHeight,
+    style,
+    className,
+    dragHandle,
+    autoAssign = true,
+    rankLabel,
+    onRankChange,
+  },
   ref,
 ) {
   const [images, setImages] = useState<WonseoImage[]>([]);
@@ -69,7 +86,17 @@ export const WonseoCardView = forwardRef<
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           {dragHandle}
-          <span className="text-[11px] font-bold text-slate-900">{card.rank || "지망 미지정"}</span>
+          {autoAssign ? (
+            <span className="text-[11px] font-bold text-slate-900">{rankLabel}</span>
+          ) : (
+            <input
+              key={card.id}
+              defaultValue={card.rank ?? ""}
+              onBlur={(e) => onRankChange?.(e.target.value)}
+              placeholder="미지정"
+              className="text-[11px] font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-md px-1.5 py-0.5 w-20 focus:outline-none focus:ring-1 focus:ring-indigo-400 placeholder:font-semibold placeholder:text-slate-400"
+            />
+          )}
           <span
             className={`text-[11px] font-bold px-2.5 py-1 rounded-lg ${emphasis.badge}`}
           >
