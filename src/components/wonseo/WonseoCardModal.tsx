@@ -531,6 +531,9 @@ export function WonseoCardModal({
       <RecentResultsEditor
         years={form.recentResults}
         onChange={(next) => set("recentResults", next)}
+        university={form.university}
+        department={form.department}
+        category={form.category}
       />
 
       <div>

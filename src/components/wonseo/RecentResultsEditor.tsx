@@ -1,19 +1,38 @@
 "use client";
 
+import { useState } from "react";
 import { Plus, X } from "lucide-react";
+import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/providers/ToastProvider";
 import { RESULT_ROWS, emptyResultYear } from "@/components/wonseo/RecentResultsTable";
+import {
+  fetchExactCutoffs,
+  mergeCutoffsIntoYears,
+  searchCutoffCandidates,
+  trackFromCategory,
+  type CutoffCandidate,
+} from "@/lib/admission-cutoff-lookup";
 import type { RecentResultYear } from "@/lib/database.types";
 
 /** 카드 수정 모달 안에서 쓰는 편집 가능한 최근 입결 표. 저장은 모달의 "저장하기"가 담당한다. */
 export function RecentResultsEditor({
   years,
   onChange,
+  university,
+  department,
+  category,
 }: {
   years: RecentResultYear[];
   onChange: (next: RecentResultYear[]) => void;
+  /** 불러오기 매칭 기준. 카드에 입력된 대학교명/모집단위를 그대로 넘긴다. */
+  university: string;
+  department: string;
+  /** 카드의 전형 유형("학생부교과"/"학생부종합" 등) — 같은 학과에 전형이 여러 줄 있을 때 우선 매칭에 쓴다. */
+  category: string;
 }) {
   const showToast = useToast();
+  const [importing, setImporting] = useState(false);
+  const [candidates, setCandidates] = useState<CutoffCandidate[] | null>(null);
 
   function updateCell(index: number, key: keyof RecentResultYear, value: string) {
     onChange(years.map((y, i) => (i === index ? { ...y, [key]: value } : y)));
@@ -28,8 +47,44 @@ export function RecentResultsEditor({
     onChange(years.filter((_, i) => i !== index));
   }
 
-  function handleImport() {
-    showToast("추후 업데이트 예정입니다.", "info");
+  async function applyMatch(matchUniversity: string, matchDepartment: string) {
+    const matches = await fetchExactCutoffs(matchUniversity, matchDepartment, trackFromCategory(category));
+    if (matches.length === 0) {
+      showToast("일치하는 입결 데이터를 찾을 수 없습니다. 직접 입력해주세요.", "error");
+      return;
+    }
+    onChange(mergeCutoffsIntoYears(years, matches));
+    showToast(`${matches.length}개 연도의 입결을 불러왔습니다.`, "success");
+  }
+
+  async function handleImport() {
+    const uni = university.trim();
+    const dept = department.trim();
+    if (!uni || !dept) {
+      showToast("대학교명과 모집단위를 먼저 입력해 주세요.", "error");
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const exact = await fetchExactCutoffs(uni, dept, trackFromCategory(category));
+      if (exact.length > 0) {
+        onChange(mergeCutoffsIntoYears(years, exact));
+        showToast(`${exact.length}개 연도의 입결을 불러왔습니다.`, "success");
+        return;
+      }
+
+      const found = await searchCutoffCandidates(uni, dept);
+      if (found.length === 0) {
+        showToast("일치하는 입결 데이터를 찾을 수 없습니다. 직접 입력해주세요.", "error");
+        return;
+      }
+      setCandidates(found);
+    } catch {
+      showToast("입결 데이터를 불러오지 못했습니다.", "error");
+    } finally {
+      setImporting(false);
+    }
   }
 
   return (
@@ -48,9 +103,10 @@ export function RecentResultsEditor({
           <button
             type="button"
             onClick={handleImport}
-            className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-[11px] font-bold"
+            disabled={importing}
+            className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-[11px] font-bold disabled:opacity-60"
           >
-            불러오기
+            {importing ? "검색 중..." : "불러오기"}
           </button>
         </div>
       </div>
@@ -107,6 +163,33 @@ export function RecentResultsEditor({
           </table>
         </div>
       )}
+
+      <Modal
+        open={candidates != null}
+        onClose={() => setCandidates(null)}
+        title="비슷한 학과를 선택해 주세요"
+        maxWidth="max-w-sm"
+      >
+        <p className="text-[11px] text-slate-400">
+          정확히 일치하는 입결 데이터가 없어요. 아래 중 맞는 학과가 있으면 선택해 주세요.
+        </p>
+        <div className="space-y-1.5 max-h-64 overflow-y-auto">
+          {candidates?.map((c) => (
+            <button
+              key={`${c.university}-${c.department}`}
+              type="button"
+              onClick={async () => {
+                setCandidates(null);
+                await applyMatch(c.university, c.department);
+              }}
+              className="w-full text-left px-3 py-2 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl transition"
+            >
+              <span className="font-bold text-slate-800">{c.university}</span>
+              <span className="text-slate-500"> · {c.department}</span>
+            </button>
+          ))}
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -121,6 +121,41 @@ export type AppSettings = {
   value: Record<string, unknown>;
 };
 
+/**
+ * "대학어디가" 형식 엑셀의 대학자료 시트를 그대로 저장한 입결 데이터.
+ * 매년 전체관리자가 새 파일을 올리면 통째로 교체된다.
+ */
+export type AdmissionCutoff = {
+  id: string;
+  region: string | null;
+  university: string;
+  year: number;
+  admission_period: string | null;
+  track: string | null;
+  admission_type: string | null;
+  department: string;
+  humanities_science: string | null;
+  enrollment: string | null;
+  competition_rate: string | null;
+  additional_pass: string | null;
+  converted_50: string | null;
+  converted_70: string | null;
+  max_score: string | null;
+  grade_50: string | null;
+  grade_70: string | null;
+  korean: string | null;
+  math: string | null;
+  inquiry: string | null;
+  average: string | null;
+  english: string | null;
+  total_applicants: string | null;
+  passers: string | null;
+  actual_competition_rate: string | null;
+  admission_department: string | null;
+  sub_category: string | null;
+  created_at: string;
+};
+
 export type CalendarEventType = "wonseo_linked" | "personal" | "class" | "grade";
 
 /**
@@ -216,6 +251,12 @@ export type Database = {
           Partial<Omit<CalendarEvent, "type" | "color" | "created_by" | "id">> & { id?: string };
         Update: Partial<CalendarEvent>;
       } & NoRelationships;
+      admission_cutoffs: {
+        Row: AdmissionCutoff;
+        Insert: Pick<AdmissionCutoff, "university" | "year" | "department"> &
+          Partial<Omit<AdmissionCutoff, "university" | "year" | "department" | "id">> & { id?: string };
+        Update: Partial<AdmissionCutoff>;
+      } & NoRelationships;
     };
     Views: Record<string, never>;
     Functions: {
@@ -234,6 +275,10 @@ export type Database = {
       current_student_class_no: {
         Args: Record<string, never>;
         Returns: number | null;
+      };
+      search_admission_cutoff_candidates: {
+        Args: { p_university: string; p_department: string; p_limit?: number };
+        Returns: { university: string; department: string; score: number }[];
       };
     };
   };

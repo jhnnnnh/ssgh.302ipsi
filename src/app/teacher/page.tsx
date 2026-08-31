@@ -6,6 +6,7 @@ import {
   CalendarDays,
   CircleHelp,
   Contact,
+  Database,
   GraduationCap,
   KeyRound,
   ListChecks,
@@ -26,11 +27,12 @@ import { WonseoManageTab } from "@/components/teacher/WonseoManageTab";
 import { RosterTab } from "@/components/teacher/RosterTab";
 import { TeacherCalendarTab } from "@/components/teacher/TeacherCalendarTab";
 import { TeacherManageTab } from "@/components/teacher/TeacherManageTab";
+import { AdmissionCutoffUploadTab } from "@/components/teacher/AdmissionCutoffUploadTab";
 import { ChangePasswordModal } from "@/components/teacher/ChangePasswordModal";
 import { ManualHelpModal } from "@/components/teacher/ManualHelpModal";
 import { formatClassLabel } from "@/lib/student-id";
 
-type TeacherTab = "status" | "wonseo" | "roster" | "calendar" | "teachers";
+type TeacherTab = "status" | "wonseo" | "roster" | "calendar" | "teachers" | "cutoffs";
 
 export default function TeacherPage() {
   const router = useRouter();
@@ -79,7 +81,10 @@ function TeacherDashboard() {
     { key: "roster", label: "학생 명단 관리", icon: <UsersRound className="w-4 h-4" /> },
     { key: "calendar", label: "입시 일정", icon: <CalendarDays className="w-4 h-4" /> },
     ...(isAdmin
-      ? [{ key: "teachers", label: "교사 계정 관리", icon: <UserCog className="w-4 h-4" /> }]
+      ? [
+          { key: "teachers", label: "교사 계정 관리", icon: <UserCog className="w-4 h-4" /> },
+          { key: "cutoffs", label: "입결 데이터 업로드", icon: <Database className="w-4 h-4" /> },
+        ]
       : []),
   ];
 
@@ -181,7 +186,7 @@ function TeacherDashboard() {
 
       <Tabs items={tabs} active={tab} onChange={(k) => setTab(k as TeacherTab)} />
 
-      {!loading && grade == null && classNo == null && tab !== "teachers" ? (
+      {!loading && grade == null && classNo == null && tab !== "teachers" && tab !== "cutoffs" ? (
         <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80 space-y-2">
           <p className="text-sm font-bold text-slate-600">
             {isAdmin ? "아직 등록된 반이 없습니다." : "담당 반 정보를 확인할 수 없습니다."}
@@ -201,6 +206,7 @@ function TeacherDashboard() {
         </>
       )}
       {tab === "teachers" && isAdmin && <TeacherManageTab />}
+      {tab === "cutoffs" && isAdmin && <AdmissionCutoffUploadTab />}
 
       <ChangePasswordModal open={pwModalOpen} onClose={() => setPwModalOpen(false)} />
       <ManualHelpModal open={helpModalOpen} onClose={() => setHelpModalOpen(false)} />
