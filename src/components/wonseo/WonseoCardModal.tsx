@@ -3,12 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import { GraduationCap, Paperclip } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { AutocompleteInput } from "@/components/ui/AutocompleteInput";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
 import { WonseoImageThumb } from "@/components/wonseo/WonseoImageThumb";
-import { RecentResultsEditor } from "@/components/wonseo/RecentResultsEditor";
+import { RecentResultsEditor, type ImportedCardFields } from "@/components/wonseo/RecentResultsEditor";
 import { emptyResultYear } from "@/components/wonseo/RecentResultsTable";
 import { buildStoragePath, deleteWonseoImageFile, uploadWonseoImage } from "@/lib/wonseo-storage";
+import {
+  searchAdmissionTypes,
+  searchDepartments,
+  searchUniversities,
+} from "@/lib/admission-cutoff-autocomplete";
 import {
   LEVEL_OPTIONS,
   LEVEL_TOGGLE_STYLE,
@@ -148,6 +154,18 @@ export function WonseoCardModal({
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  /** 최근 입결 불러오기가 성공하면 대학교명/모집단위/모집인원/전형도 그 결과로 맞춰 채운다. */
+  function handleImported(fields: ImportedCardFields) {
+    setForm((f) => ({
+      ...f,
+      university: fields.university,
+      department: fields.department,
+      enrollment: fields.enrollment ?? f.enrollment,
+      category: fields.category || f.category,
+      subCategory: fields.category ? fields.subCategory : f.subCategory,
+    }));
   }
 
   const isCustomCategory = !(QUICK_CATEGORY_OPTIONS as readonly string[]).includes(form.category);
@@ -327,13 +345,14 @@ export function WonseoCardModal({
           <label className="block font-bold text-slate-700 mb-1">
             대학교명 {universityError && <span className="text-rose-500">(필수)</span>}
           </label>
-          <input
+          <AutocompleteInput
             ref={universityRef}
             value={form.university}
-            onChange={(e) => {
-              set("university", e.target.value);
+            onChange={(v) => {
+              set("university", v);
               if (universityError) setUniversityError(false);
             }}
+            onSearch={searchUniversities}
             placeholder="OO대학교"
             className={cn(
               "w-full bg-slate-50 border rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2",
@@ -345,9 +364,10 @@ export function WonseoCardModal({
         </div>
         <div>
           <label className="block font-bold text-slate-700 mb-1">모집단위 / 학과</label>
-          <input
+          <AutocompleteInput
             value={form.department}
-            onChange={(e) => set("department", e.target.value)}
+            onChange={(v) => set("department", v)}
+            onSearch={(q) => searchDepartments(q, form.university)}
             placeholder="OO학과 또는 OO학부"
             className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
@@ -408,9 +428,14 @@ export function WonseoCardModal({
         </div>
         <div>
           <label className="block font-bold text-slate-700 mb-1">세부 전형명</label>
-          <input
+          <AutocompleteInput
             value={form.subCategory}
-            onChange={(e) => set("subCategory", e.target.value)}
+            onChange={(v) => set("subCategory", v)}
+            onSearch={
+              form.university.trim()
+                ? (q) => searchAdmissionTypes(q, form.university, form.department)
+                : undefined
+            }
             placeholder="예: 지역균형전형 / 일반전형"
             className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
@@ -534,6 +559,7 @@ export function WonseoCardModal({
         university={form.university}
         department={form.department}
         category={form.category}
+        onImported={handleImported}
       />
 
       <div>

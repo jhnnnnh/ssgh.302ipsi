@@ -59,6 +59,23 @@ export function trackFromCategory(category: string): "교과" | "종합" | undef
   return undefined;
 }
 
+/**
+ * "종합(지역인재)" 같은 전형 문자열을 카드의 전형 유형/세부 전형명으로 나눈다.
+ * 괄호가 없으면(예: "일반전형") 전체를 세부 전형명으로 쓴다.
+ */
+export function describeAdmissionType(admissionType: string): { category: string; subCategory: string } {
+  const match = admissionType.match(/^(교과|종합)\((.+)\)$/);
+  if (match) {
+    return { category: match[1] === "교과" ? "학생부교과" : "학생부종합", subCategory: match[2] };
+  }
+  const category = admissionType.startsWith("교과")
+    ? "학생부교과"
+    : admissionType.startsWith("종합")
+      ? "학생부종합"
+      : "";
+  return { category, subCategory: admissionType };
+}
+
 /** 전형 목록(중복 없이) — 카드의 전형 유형과 같은 트랙을 앞쪽에 정렬해서 고르기 쉽게 한다. */
 function buildTypeOptions(rows: CutoffRow[], preferredTrack?: "교과" | "종합"): AdmissionTypeOption[] {
   const byType = new Map<string, CutoffRow>();

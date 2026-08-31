@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/providers/ToastProvider";
 import { RESULT_ROWS, emptyResultYear } from "@/components/wonseo/RecentResultsTable";
 import {
+  describeAdmissionType,
   fetchCutoffsForType,
   fetchExactCutoffs,
   mergeCutoffsIntoYears,
@@ -16,6 +17,16 @@ import {
 } from "@/lib/admission-cutoff-lookup";
 import type { RecentResultYear } from "@/lib/database.types";
 
+export type ImportedCardFields = {
+  university: string;
+  department: string;
+  /** 최근 연도 기준 모집인원. 값이 없으면 카드의 기존 모집인원을 그대로 둔다. */
+  enrollment: string | null;
+  /** 전형을 알 수 없는 경우(후보만 있고 아직 안 골랐을 때)는 비워서 카드의 전형 필드를 안 건드린다. */
+  category: string;
+  subCategory: string;
+};
+
 /** 카드 수정 모달 안에서 쓰는 편집 가능한 최근 입결 표. 저장은 모달의 "저장하기"가 담당한다. */
 export function RecentResultsEditor({
   years,
@@ -23,6 +34,7 @@ export function RecentResultsEditor({
   university,
   department,
   category,
+  onImported,
 }: {
   years: RecentResultYear[];
   onChange: (next: RecentResultYear[]) => void;
@@ -31,6 +43,8 @@ export function RecentResultsEditor({
   department: string;
   /** 카드의 전형 유형("학생부교과"/"학생부종합" 등) — 같은 학과에 전형이 여러 줄 있을 때 우선 매칭에 쓴다. */
   category: string;
+  /** 불러오기에 성공하면 대학교명/모집단위/모집인원/전형까지 카드 상단 필드에도 반영한다. */
+  onImported?: (fields: ImportedCardFields) => void;
 }) {
   const showToast = useToast();
   const [importing, setImporting] = useState(false);
@@ -72,6 +86,14 @@ export function RecentResultsEditor({
     onChange(mergeCutoffsIntoYears(years, result.years));
     const typeLabel = result.admissionType ? ` ${result.admissionType}` : "";
     showToast(`${matchUniversity} ${matchDepartment}${typeLabel} 데이터를 불러옵니다.`, "success");
+    const desc = result.admissionType ? describeAdmissionType(result.admissionType) : null;
+    onImported?.({
+      university: matchUniversity,
+      department: matchDepartment,
+      enrollment: result.years[0]?.enrollment ?? null,
+      category: desc?.category ?? "",
+      subCategory: desc?.subCategory ?? "",
+    });
   }
 
   async function applyType(admissionType: string) {
@@ -86,6 +108,14 @@ export function RecentResultsEditor({
     }
     onChange(mergeCutoffsIntoYears(years, matches));
     showToast(`${matchUniversity} ${matchDepartment} ${admissionType} 데이터를 불러옵니다.`, "success");
+    const desc = describeAdmissionType(admissionType);
+    onImported?.({
+      university: matchUniversity,
+      department: matchDepartment,
+      enrollment: matches[0]?.enrollment ?? null,
+      category: desc.category,
+      subCategory: desc.subCategory,
+    });
   }
 
   async function handleImport() {
