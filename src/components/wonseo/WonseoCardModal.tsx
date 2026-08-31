@@ -47,7 +47,6 @@ import type {
 } from "@/lib/database.types";
 
 interface FormState {
-  rank: string;
   level: SupportLevel;
   status: ApplicationStatus;
   university: string;
@@ -69,7 +68,6 @@ interface FormState {
 }
 
 const EMPTY_FORM: FormState = {
-  rank: "",
   level: "적정",
   status: "지원예정",
   university: "",
@@ -97,7 +95,6 @@ function defaultRecentResultYears(): RecentResultYear[] {
 
 function cardToForm(card: WonseoCard): FormState {
   return {
-    rank: card.rank ?? "",
     level: card.level,
     status: card.status,
     university: card.university ?? "",
@@ -288,7 +285,6 @@ export function WonseoCardModal({
 
     const payload = {
       student_id: studentId,
-      rank: form.rank.trim() || null,
       level: form.level,
       status: form.status,
       university: form.university.trim(),
@@ -377,35 +373,24 @@ export function WonseoCardModal({
         </>
       }
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="block font-bold text-slate-700 mb-1">지망 순위</label>
-          <input
-            value={form.rank}
-            onChange={(e) => set("rank", e.target.value)}
-            placeholder="예: 1지망"
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block font-bold text-slate-700 mb-1">지원 정도</label>
-          <div className="grid grid-cols-4 gap-1.5">
-            {LEVEL_OPTIONS.map((level) => (
-              <button
-                key={level}
-                type="button"
-                onClick={() => set("level", level)}
-                className={cn(
-                  "py-2 rounded-xl border font-bold transition",
-                  form.level === level
-                    ? LEVEL_TOGGLE_STYLE[level].active
-                    : LEVEL_TOGGLE_STYLE[level].inactive,
-                )}
-              >
-                {level}
-              </button>
-            ))}
-          </div>
+      <div>
+        <label className="block font-bold text-slate-700 mb-1">지원 정도</label>
+        <div className="grid grid-cols-4 gap-1.5">
+          {LEVEL_OPTIONS.map((level) => (
+            <button
+              key={level}
+              type="button"
+              onClick={() => set("level", level)}
+              className={cn(
+                "py-2 rounded-xl border font-bold transition",
+                form.level === level
+                  ? LEVEL_TOGGLE_STYLE[level].active
+                  : LEVEL_TOGGLE_STYLE[level].inactive,
+              )}
+            >
+              {level}
+            </button>
+          ))}
         </div>
       </div>
 

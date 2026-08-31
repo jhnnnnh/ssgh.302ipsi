@@ -27,7 +27,8 @@ import { useEqualHeights } from "@/lib/hooks/useEqualHeights";
 import { SortableWonseoCard } from "@/components/wonseo/SortableWonseoCard";
 import { WonseoCardView } from "@/components/wonseo/WonseoCardView";
 import { WonseoCardModal } from "@/components/wonseo/WonseoCardModal";
-import type { WonseoCard } from "@/lib/database.types";
+import { computeRankLabels } from "@/lib/wonseo-rank";
+import type { RankMode, WonseoCard } from "@/lib/database.types";
 
 export function WonseoTab({ studentId }: { studentId: string }) {
   const showToast = useToast();
@@ -117,7 +118,20 @@ export function WonseoTab({ studentId }: { studentId: string }) {
     }
   }
 
+  async function handleRankUpdate(
+    card: WonseoCard,
+    patch: { rank_mode: RankMode; rank?: string | null },
+  ) {
+    const { error } = await supabase.from("wonseo_cards").update(patch).eq("id", card.id);
+    if (error) {
+      showToast("지망 순위 변경에 실패했습니다.", "error");
+      return;
+    }
+    reload();
+  }
+
   const activeCard = cards.find((c) => c.id === activeId) ?? null;
+  const rankLabels = useMemo(() => computeRankLabels(cards), [cards]);
 
   return (
     <div className="space-y-6">
@@ -155,6 +169,8 @@ export function WonseoTab({ studentId }: { studentId: string }) {
                   minHeight={maxHeight}
                   isDragging={activeId === card.id}
                   card={card}
+                  rankLabel={rankLabels[index]}
+                  onRankUpdate={(patch) => handleRankUpdate(card, patch)}
                   showStatus={statusVisible}
                   onEdit={() => openEdit(card)}
                   onDelete={() => handleDelete(card)}
@@ -167,6 +183,7 @@ export function WonseoTab({ studentId }: { studentId: string }) {
               <div className="shadow-2xl shadow-indigo-900/30 rounded-3xl rotate-1 scale-[1.03]">
                 <WonseoCardView
                   card={activeCard}
+                  rankLabel={rankLabels[cards.findIndex((c) => c.id === activeCard.id)]}
                   showStatus={statusVisible}
                   onEdit={() => {}}
                   onDelete={() => {}}

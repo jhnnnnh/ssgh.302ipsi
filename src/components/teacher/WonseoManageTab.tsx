@@ -32,7 +32,8 @@ import { WonseoCardView } from "@/components/wonseo/WonseoCardView";
 import { WonseoCardModal } from "@/components/wonseo/WonseoCardModal";
 import { WonseoTableView } from "@/components/teacher/WonseoTableView";
 import { exportWonseoExcel } from "@/lib/wonseo-excel";
-import type { WonseoCard } from "@/lib/database.types";
+import { computeRankLabels } from "@/lib/wonseo-rank";
+import type { RankMode, WonseoCard } from "@/lib/database.types";
 
 type ViewMode = "cards" | "table";
 
@@ -148,6 +149,18 @@ export function WonseoManageTab() {
     }
   }
 
+  async function handleRankUpdate(
+    card: WonseoCard,
+    patch: { rank_mode: RankMode; rank?: string | null },
+  ) {
+    const { error } = await supabase.from("wonseo_cards").update(patch).eq("id", card.id);
+    if (error) {
+      showToast("지망 순위 변경에 실패했습니다.", "error");
+      return;
+    }
+    reload(selectedStudentId);
+  }
+
   async function handleExportExcel() {
     setExporting(true);
     const { data, error } = await supabase.from("wonseo_cards").select("*");
@@ -174,6 +187,7 @@ export function WonseoManageTab() {
   }
 
   const activeCard = cards.find((c) => c.id === activeId) ?? null;
+  const rankLabels = useMemo(() => computeRankLabels(cards), [cards]);
 
   return (
     <div className="space-y-6">
@@ -270,6 +284,8 @@ export function WonseoManageTab() {
                           minHeight={maxHeight}
                           isDragging={activeId === card.id}
                           card={card}
+                          rankLabel={rankLabels[index]}
+                          onRankUpdate={(patch) => handleRankUpdate(card, patch)}
                           showStatus={statusVisible}
                           onEdit={() => openEdit(card)}
                           onDelete={() => handleDelete(card)}
@@ -282,6 +298,7 @@ export function WonseoManageTab() {
                       <div className="shadow-2xl shadow-indigo-900/30 rounded-3xl rotate-1 scale-[1.03]">
                         <WonseoCardView
                           card={activeCard}
+                          rankLabel={rankLabels[cards.findIndex((c) => c.id === activeCard.id)]}
                           showStatus={statusVisible}
                           onEdit={() => {}}
                           onDelete={() => {}}

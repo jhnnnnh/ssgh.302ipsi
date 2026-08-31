@@ -67,10 +67,19 @@ export type SlotFavorite = {
   created_at: string;
 };
 
+/**
+ * 지망 순위 표기 방식. auto: 카드의 드래그 순서(sort_order)를 기준으로 화면에서 "N지망"을
+ * 자동 계산(다른 auto 카드끼리만 세어서 매김). unassigned: 순번 계산에서 완전히 제외되고
+ * "미지정"으로만 표시. custom: rank 컬럼에 저장된 텍스트를 그대로 보여준다(이때만 rank를 씀).
+ */
+export type RankMode = "auto" | "unassigned" | "custom";
+
 export type WonseoCard = {
   id: string;
   student_id: string;
+  /** rank_mode가 "custom"일 때만 의미 있는 직접 입력 텍스트. 그 외에는 화면에 쓰이지 않는다. */
   rank: string | null;
+  rank_mode: RankMode;
   level: SupportLevel;
   status: ApplicationStatus;
   university: string | null;
