@@ -28,6 +28,7 @@ import { RosterTab } from "@/components/teacher/RosterTab";
 import { TeacherCalendarTab } from "@/components/teacher/TeacherCalendarTab";
 import { TeacherManageTab } from "@/components/teacher/TeacherManageTab";
 import { AdmissionCutoffUploadTab } from "@/components/teacher/AdmissionCutoffUploadTab";
+import { AdmissionMethodUploadTab } from "@/components/teacher/AdmissionMethodUploadTab";
 import { ChangePasswordModal } from "@/components/teacher/ChangePasswordModal";
 import { ManualHelpModal } from "@/components/teacher/ManualHelpModal";
 import { formatClassLabel } from "@/lib/student-id";
@@ -83,7 +84,7 @@ function TeacherDashboard() {
     ...(isAdmin
       ? [
           { key: "teachers", label: "교사 계정 관리", icon: <UserCog className="w-4 h-4" /> },
-          { key: "cutoffs", label: "입결 데이터 업로드", icon: <Database className="w-4 h-4" /> },
+          { key: "cutoffs", label: "데이터 관리", icon: <Database className="w-4 h-4" /> },
         ]
       : []),
   ];
@@ -206,7 +207,12 @@ function TeacherDashboard() {
         </>
       )}
       {tab === "teachers" && isAdmin && <TeacherManageTab />}
-      {tab === "cutoffs" && isAdmin && <AdmissionCutoffUploadTab />}
+      {tab === "cutoffs" && isAdmin && (
+        <div className="space-y-5">
+          <AdmissionCutoffUploadTab />
+          <AdmissionMethodUploadTab />
+        </div>
+      )}
 
       <ChangePasswordModal open={pwModalOpen} onClose={() => setPwModalOpen(false)} />
       <ManualHelpModal open={helpModalOpen} onClose={() => setHelpModalOpen(false)} />

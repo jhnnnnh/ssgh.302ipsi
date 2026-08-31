@@ -156,6 +156,26 @@ export type AdmissionCutoff = {
   created_at: string;
 };
 
+export type AdmissionMethodCategory = "학생부교과전형" | "학생부종합전형" | "논술전형";
+
+/**
+ * "전형방법/수능최저학력기준 참고자료" 엑셀의 3개 시트(학생부교과전형/학생부종합전형/논술전형)를
+ * 그대로 저장한 전형정보. 매년 전체관리자가 새 파일을 올리면 통째로 교체된다.
+ */
+export type AdmissionMethod = {
+  id: string;
+  category: AdmissionMethodCategory;
+  region: string | null;
+  area: string;
+  university: string;
+  admission_type: string;
+  method: string | null;
+  min_standard: string | null;
+  note: string | null;
+  review_elements: string | null;
+  created_at: string;
+};
+
 export type CalendarEventType = "wonseo_linked" | "personal" | "class" | "grade";
 
 /**
@@ -256,6 +276,14 @@ export type Database = {
         Insert: Pick<AdmissionCutoff, "university" | "year" | "department"> &
           Partial<Omit<AdmissionCutoff, "university" | "year" | "department" | "id">> & { id?: string };
         Update: Partial<AdmissionCutoff>;
+      } & NoRelationships;
+      admission_methods: {
+        Row: AdmissionMethod;
+        Insert: Pick<AdmissionMethod, "category" | "area" | "university" | "admission_type"> &
+          Partial<Omit<AdmissionMethod, "category" | "area" | "university" | "admission_type" | "id">> & {
+            id?: string;
+          };
+        Update: Partial<AdmissionMethod>;
       } & NoRelationships;
     };
     Views: Record<string, never>;
