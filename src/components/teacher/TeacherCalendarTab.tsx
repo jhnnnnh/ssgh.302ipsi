@@ -101,6 +101,7 @@ export function TeacherCalendarTab() {
       <CalendarEventModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+        events={events}
         editingEvent={editingEvent}
         allowedTypes={allowedTypes}
         defaultDate={defaultDate}

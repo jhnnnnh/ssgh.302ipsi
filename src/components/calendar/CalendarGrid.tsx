@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { getMonthGridCells, toDateString } from "@/lib/calendar-grid";
+import { eventGroupKey } from "@/lib/calendar-group";
 import { EVENT_TYPE_LABELS, weekdayLabelClass } from "@/lib/calendar-constants";
 import { WEEKDAY_KR } from "@/lib/time";
 import type { ResolvedCalendarEvent } from "@/lib/hooks/useCalendarEvents";
@@ -130,8 +131,17 @@ export function CalendarGrid({
           ))}
         </div>
         <div className="grid grid-cols-7 gap-1">
-          {cells.map((cell) => {
+          {cells.map((cell, idx) => {
             const dayEvents = eventsByDate.get(cell.dateStr) ?? [];
+            const shownEvents = dayEvents.slice(0, MAX_BADGES_PER_DAY);
+            const prevShown =
+              cell.dayOfWeek !== 0 && idx > 0
+                ? (eventsByDate.get(cells[idx - 1].dateStr) ?? []).slice(0, MAX_BADGES_PER_DAY)
+                : [];
+            const nextShown =
+              cell.dayOfWeek !== 6 && idx < cells.length - 1
+                ? (eventsByDate.get(cells[idx + 1].dateStr) ?? []).slice(0, MAX_BADGES_PER_DAY)
+                : [];
             const isSelected = cell.dateStr === selectedDate;
             const isToday = cell.dateStr === todayStr;
             return (
@@ -160,20 +170,37 @@ export function CalendarGrid({
                   {cell.day}
                 </span>
                 <div className="space-y-0.5 min-w-0">
-                  {dayEvents.slice(0, MAX_BADGES_PER_DAY).map((ev) => (
-                    <div
-                      key={ev.id}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedDate(cell.dateStr);
-                        if (canManageEvent(ev)) onEditEvent(ev);
-                      }}
-                      className="text-[9px] sm:text-[10px] font-bold text-white px-1.5 py-0.5 rounded truncate"
-                      style={{ backgroundColor: ev.color }}
-                    >
-                      {displayTitle(ev)}
-                    </div>
-                  ))}
+                  {shownEvents.map((ev, i) => {
+                    const key = eventGroupKey(ev);
+                    const connectLeft = key != null && eventGroupKey(prevShown[i]) === key;
+                    const connectRight = key != null && eventGroupKey(nextShown[i]) === key;
+                    return (
+                      <div
+                        key={ev.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDate(cell.dateStr);
+                          if (canManageEvent(ev)) onEditEvent(ev);
+                        }}
+                        className={cn(
+                          "relative text-[9px] sm:text-[10px] font-bold text-white px-1.5 py-0.5 truncate",
+                          connectLeft && connectRight
+                            ? "rounded-none"
+                            : connectLeft
+                              ? "rounded-r"
+                              : connectRight
+                                ? "rounded-l"
+                                : "rounded",
+                        )}
+                        style={{
+                          backgroundColor: ev.color,
+                          ...(connectRight ? { marginRight: "-1.125rem", zIndex: 10 } : undefined),
+                        }}
+                      >
+                        {connectLeft ? " " : displayTitle(ev)}
+                      </div>
+                    );
+                  })}
                   {dayEvents.length > MAX_BADGES_PER_DAY && (
                     <div className="text-[9px] sm:text-[10px] font-bold text-slate-400 px-1.5">
                       +{dayEvents.length - MAX_BADGES_PER_DAY}

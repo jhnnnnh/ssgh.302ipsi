@@ -82,6 +82,7 @@ export function StudentCalendarTab({ studentId }: { studentId: string }) {
       <CalendarEventModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+        events={events}
         editingEvent={editingEvent}
         allowedTypes={["personal"]}
         defaultDate={defaultDate}

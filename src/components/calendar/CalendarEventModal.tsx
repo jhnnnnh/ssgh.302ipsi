@@ -7,12 +7,29 @@ import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
 import { cn } from "@/lib/cn";
 import { DEFAULT_EVENT_COLOR, EVENT_COLOR_PALETTE, EVENT_TYPE_LABELS } from "@/lib/calendar-constants";
+import { toDateString } from "@/lib/calendar-grid";
+import { findConnectedGroup } from "@/lib/calendar-group";
 import type { CalendarEventType } from "@/lib/database.types";
 import type { ResolvedCalendarEvent } from "@/lib/hooks/useCalendarEvents";
+
+const MAX_RANGE_DAYS = 60;
+
+/** start~end(포함) 사이의 "YYYY-MM-DD" 날짜 목록을 만든다. */
+function dateRange(start: string, end: string): string[] {
+  const dates: string[] = [];
+  const cur = new Date(`${start}T00:00:00`);
+  const last = new Date(`${end}T00:00:00`);
+  while (cur <= last) {
+    dates.push(toDateString(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return dates;
+}
 
 export function CalendarEventModal({
   open,
   onClose,
+  events,
   editingEvent,
   allowedTypes,
   defaultDate,
@@ -22,6 +39,8 @@ export function CalendarEventModal({
 }: {
   open: boolean;
   onClose: () => void;
+  /** 연속된 날짜에 같은 일정이 이어져 있는지 판단하기 위한 전체 일정 목록. */
+  events: ResolvedCalendarEvent[];
   /** null이면 새 일정 추가, 값이 있으면 그 일정 수정(wonseo_linked면 색상만 수정 가능). */
   editingEvent: ResolvedCalendarEvent | null;
   allowedTypes: CalendarEventType[];
@@ -36,10 +55,13 @@ export function CalendarEventModal({
   const [type, setType] = useState<CalendarEventType>(allowedTypes[0] ?? "personal");
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [color, setColor] = useState<string>(DEFAULT_EVENT_COLOR);
   const [titleError, setTitleError] = useState(false);
   const [dateError, setDateError] = useState(false);
   const [saving, setSaving] = useState(false);
+  /** 수정 대상이 이어진 일정 묶음일 때, 원래 그 묶음이 차지하던 날짜→id. 저장 시 이 목록과 비교해 변경분만 반영한다. */
+  const [originalGroup, setOriginalGroup] = useState<{ id: string; date: string }[]>([]);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -47,13 +69,19 @@ export function CalendarEventModal({
     if (editingEvent) {
       setType(editingEvent.type);
       setTitle(editingEvent.resolvedTitle);
-      setDate(editingEvent.resolvedDate ?? "");
       setColor(editingEvent.color);
+      const group = findConnectedGroup(editingEvent, events);
+      const dates = group.map((e) => ({ id: e.id, date: e.resolvedDate! }));
+      setOriginalGroup(dates);
+      setDate(dates[0]?.date ?? editingEvent.resolvedDate ?? "");
+      setEndDate(dates.length > 1 ? dates[dates.length - 1].date : "");
     } else {
       setType(allowedTypes[0] ?? "personal");
       setTitle("");
       setDate(defaultDate ?? "");
+      setEndDate("");
       setColor(DEFAULT_EVENT_COLOR);
+      setOriginalGroup([]);
     }
     setTitleError(false);
     setDateError(false);
@@ -89,32 +117,67 @@ export function CalendarEventModal({
       showToast("제목과 날짜를 입력해 주세요.", "error");
       return;
     }
+    if (endDate && endDate < date) {
+      setDateError(true);
+      showToast("종료일은 시작일보다 빠를 수 없어요.", "error");
+      return;
+    }
+
+    const supabase = createClient();
+    const dates = endDate && endDate > date ? dateRange(date, endDate) : [date];
+    if (dates.length > MAX_RANGE_DAYS) {
+      showToast(`한 번에 최대 ${MAX_RANGE_DAYS}일까지 등록할 수 있어요.`, "error");
+      return;
+    }
+
+    const basePayload = {
+      type,
+      title: title.trim(),
+      color,
+      created_by: createdBy,
+      student_id: type === "personal" ? (scope.studentId ?? null) : null,
+      grade: type === "class" ? (scope.grade ?? null) : null,
+      class_no: type === "class" ? (scope.classNo ?? null) : null,
+    };
 
     setSaving(true);
-    const supabase = createClient();
 
     if (editingEvent) {
-      const { error } = await supabase
-        .from("calendar_events")
-        .update({ title: title.trim(), date, color, updated_at: new Date().toISOString() })
-        .eq("id", editingEvent.id);
+      // 원래 묶음의 날짜 중, 새 범위에도 남아있는 날짜는 그 행을 그대로 수정(id 유지),
+      // 새로 포함된 날짜만 추가하고, 빠진 날짜만 삭제한다 — 통째로 지웠다 새로 올리지 않는다.
+      const newDateSet = new Set(dates);
+      const idByDate = new Map(originalGroup.map((g) => [g.date, g.id]));
+
+      const toUpdate = dates.filter((d) => idByDate.has(d));
+      const toInsert = dates.filter((d) => !idByDate.has(d));
+      const toDelete = originalGroup.filter((g) => !newDateSet.has(g.date)).map((g) => g.id);
+
+      const [updateResults, insertResult, deleteResult] = await Promise.all([
+        Promise.all(
+          toUpdate.map((d) =>
+            supabase
+              .from("calendar_events")
+              .update({ ...basePayload, updated_at: new Date().toISOString() })
+              .eq("id", idByDate.get(d)!),
+          ),
+        ),
+        toInsert.length > 0
+          ? supabase.from("calendar_events").insert(toInsert.map((d) => ({ ...basePayload, date: d })))
+          : Promise.resolve({ error: null }),
+        toDelete.length > 0
+          ? supabase.from("calendar_events").delete().in("id", toDelete)
+          : Promise.resolve({ error: null }),
+      ]);
       setSaving(false);
-      if (error) {
+      const failed = updateResults.some((r) => r.error) || insertResult.error || deleteResult.error;
+      if (failed) {
         showToast("저장에 실패했습니다.", "error");
         return;
       }
     } else {
-      const payload = {
-        type,
-        title: title.trim(),
-        date,
-        color,
-        created_by: createdBy,
-        student_id: type === "personal" ? (scope.studentId ?? null) : null,
-        grade: type === "class" ? (scope.grade ?? null) : null,
-        class_no: type === "class" ? (scope.classNo ?? null) : null,
-      };
-      const { error } = await supabase.from("calendar_events").insert(payload);
+      const { error } = await supabase
+        .from("calendar_events")
+        .insert(dates.map((d) => ({ ...basePayload, date: d })));
       setSaving(false);
       if (error) {
         showToast("저장에 실패했습니다.", "error");
@@ -208,23 +271,47 @@ export function CalendarEventModal({
           </div>
 
           <div>
-            <label className="block font-bold text-slate-700 mb-1">
-              날짜 {dateError && <span className="text-rose-500">(필수)</span>}
-            </label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => {
-                setDate(e.target.value);
-                if (dateError) setDateError(false);
-              }}
-              className={cn(
-                "w-full bg-slate-50 border rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2",
-                dateError
-                  ? "border-rose-400 focus:ring-rose-400"
-                  : "border-slate-300 focus:ring-indigo-500",
-              )}
-            />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  시작일 {dateError && <span className="text-rose-500">(필수)</span>}
+                </label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => {
+                    setDate(e.target.value);
+                    if (dateError) setDateError(false);
+                  }}
+                  className={cn(
+                    "w-full bg-slate-50 border rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2",
+                    dateError
+                      ? "border-rose-400 focus:ring-rose-400"
+                      : "border-slate-300 focus:ring-indigo-500",
+                  )}
+                />
+              </div>
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">종료일 (선택)</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  min={date || undefined}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+            {date && endDate && endDate > date && (
+              <p className="text-[11px] text-slate-400 mt-1">
+                {dateRange(date, endDate).length}일간 이어진 일정으로 저장됩니다.
+              </p>
+            )}
+            {editingEvent && originalGroup.length > 1 && (
+              <p className="text-[11px] text-slate-400 mt-1">
+                연속된 {originalGroup.length}일짜리 일정이에요. 날짜를 바꾸면 묶음 전체에 반영됩니다.
+              </p>
+            )}
           </div>
         </div>
       )}
