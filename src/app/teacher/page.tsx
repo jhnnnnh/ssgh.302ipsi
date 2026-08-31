@@ -65,7 +65,8 @@ export default function TeacherPage() {
 function TeacherDashboard() {
   const router = useRouter();
   const { profile, refreshProfile, signOut } = useAuth();
-  const { grade, classNo, isAdmin, classOptions, setActiveClass, loading } = useActiveClass();
+  const { grade, classNo, isAdmin, canSwitchClass, classOptions, setActiveClass, loading } =
+    useActiveClass();
   const [tab, setTab] = useState<TeacherTab>("status");
   const [pwModalOpen, setPwModalOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
@@ -108,17 +109,17 @@ function TeacherDashboard() {
               <button
                 onClick={handleToggleAdminMode}
                 disabled={togglingAdmin}
-                className={`px-3.5 py-2 rounded-xl text-sm font-bold transition border flex items-center gap-1.5 disabled:opacity-60 ${
+                title={`관리자 모드 ${profile.admin_mode_enabled ? "켜짐" : "꺼짐"}`}
+                className={`p-2 rounded-xl transition border disabled:opacity-60 ${
                   profile.admin_mode_enabled
                     ? "bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600"
-                    : "bg-white hover:bg-slate-50 text-slate-600 border-slate-200"
+                    : "bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 border-slate-200"
                 }`}
               >
                 <ShieldUser className="w-3.5 h-3.5" />
-                <span>관리자 모드 {profile.admin_mode_enabled ? "켜짐" : "꺼짐"}</span>
               </button>
             )}
-            {isAdmin && (
+            {canSwitchClass && (
               <select
                 value={grade != null && classNo != null ? `${grade}-${classNo}` : ""}
                 onChange={(e) => {

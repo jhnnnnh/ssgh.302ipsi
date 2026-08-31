@@ -11,6 +11,8 @@ interface ActiveClassContextValue {
   grade: number | null;
   classNo: number | null;
   isAdmin: boolean;
+  /** 다른 반으로 전환해 볼 수 있는지 여부. 담임을 겸하는 관리자는 켜져 있어도 자기 반에 고정된다. */
+  canSwitchClass: boolean;
   classOptions: ClassOption[];
   setActiveClass: (grade: number, classNo: number) => void;
   loading: boolean;
@@ -27,6 +29,9 @@ export function ActiveClassProvider({ children }: { children: React.ReactNode })
   const { profile } = useAuth();
   const isAdmin =
     profile?.teacher_role === "admin" || Boolean(profile?.dual_admin && profile.admin_mode_enabled);
+  // 담임 없는 순수 전체관리자만 다른 반을 넘나들 수 있다. 담임을 겸하는 관리자(dual_admin)는
+  // 관리자 모드를 켜도 본인 반에 고정되어 다른 반 정보가 섞이지 않는다.
+  const canSwitchClass = profile?.teacher_role === "admin";
   const [classOptions, setClassOptions] = useState<ClassOption[]>([]);
   const [selected, setSelected] = useState<{ grade: number; classNo: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,7 +39,7 @@ export function ActiveClassProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (!profile) return;
 
-    if (!isAdmin) {
+    if (!canSwitchClass) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelected(
         profile.grade != null && profile.class_no != null
@@ -77,18 +82,19 @@ export function ActiveClassProvider({ children }: { children: React.ReactNode })
       );
       setLoading(false);
     })();
-  }, [profile, isAdmin]);
+  }, [profile, canSwitchClass]);
 
   const value = useMemo<ActiveClassContextValue>(
     () => ({
       grade: selected?.grade ?? null,
       classNo: selected?.classNo ?? null,
       isAdmin,
+      canSwitchClass,
       classOptions,
       setActiveClass: (grade: number, classNo: number) => setSelected({ grade, classNo }),
       loading,
     }),
-    [selected, isAdmin, classOptions, loading],
+    [selected, isAdmin, canSwitchClass, classOptions, loading],
   );
 
   return <ActiveClassContext.Provider value={value}>{children}</ActiveClassContext.Provider>;
