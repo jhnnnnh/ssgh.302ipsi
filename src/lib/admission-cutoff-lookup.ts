@@ -24,6 +24,16 @@ export type AdmissionTypeOption = {
 
 const RECENT_YEARS = 3;
 
+/**
+ * 학생이 실제로 지원하는 입시 학년도(수시를 접수하는 해의 다음 해)를 계산한다. "대학어디가"
+ * 입결 데이터는 항상 그 전해까지의 실제 결과만 담고 있어서, 이 연도와 똑같은 모집인원 행은
+ * 구조적으로 존재할 수 없다 — 그래서 카드 상단 모집인원을 "가장 최근 연도" 값으로 자동
+ * 채우면 사실은 작년 숫자인데 올해 숫자인 것처럼 보이는 문제가 생긴다.
+ */
+export function currentAdmissionYear(): number {
+  return new Date().getFullYear() + 1;
+}
+
 /** 대학교명 + 모집단위가 정확히 일치하는 입결 원본 행을 전부 가져온다(연도별로 안 묶은 상태). */
 async function fetchCutoffRows(university: string, department: string): Promise<CutoffRow[]> {
   const supabase = createClient();

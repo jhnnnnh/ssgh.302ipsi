@@ -9,6 +9,7 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { WonseoImageThumb } from "@/components/wonseo/WonseoImageThumb";
 import { RecentResultsEditor } from "@/components/wonseo/RecentResultsEditor";
 import {
+  currentAdmissionYear,
   describeAdmissionType,
   fetchCutoffsForType,
   fetchExactCutoffs,
@@ -178,8 +179,11 @@ export function WonseoCardModal({
   }
 
   /**
-   * 입결 데이터를 찾으면 대학교명/모집단위/모집인원/전형 유형/세부 전형명과 최근 입결 표까지
-   * 한 번에 채운다. "나의 상대적 위치"는 학생이 직접 쓰는 값이라 절대 건드리지 않는다.
+   * 입결 데이터를 찾으면 대학교명/모집단위/전형 유형/세부 전형명과 최근 입결 표까지 한 번에
+   * 채운다. 카드 상단 모집인원은 예외로, 불러온 가장 최근 연도가 실제 이번 입시 연도(예:
+   * 2027학년도 지원이면 2027)와 정확히 같을 때만 채운다 — 입결 데이터는 항상 그 전해까지의
+   * 결과만 있어서, 최근 연도라고 무조건 채우면 사실은 작년 모집인원인데 올해 것처럼 보인다.
+   * "나의 상대적 위치"는 학생이 직접 쓰는 값이라 절대 건드리지 않는다.
    */
   async function applyImportedResult(
     matchUniversity: string,
@@ -195,7 +199,8 @@ export function WonseoCardModal({
       ...f,
       university: matchUniversity,
       department: matchDepartment,
-      enrollment: years[0]?.enrollment ?? f.enrollment,
+      enrollment:
+        years[0]?.year === currentAdmissionYear() ? (years[0]?.enrollment ?? f.enrollment) : f.enrollment,
       category: desc?.category || f.category,
       subCategory: desc ? desc.subCategory : f.subCategory,
       recentResults: mergeCutoffsIntoYears(f.recentResults, years),
