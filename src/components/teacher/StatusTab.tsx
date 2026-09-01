@@ -22,6 +22,7 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { DateTabs } from "@/components/ui/DateTabs";
 import { EditSlotModal } from "@/components/teacher/EditSlotModal";
+import { Card } from "@/components/ui/Card";
 import { AddDateModal } from "@/components/teacher/AddDateModal";
 import { FavoritesSettingsModal } from "@/components/teacher/FavoritesSettingsModal";
 import { downloadCsv } from "@/lib/csv";
@@ -273,7 +274,7 @@ export function StatusTab() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden space-y-4 p-6">
+      <Card className="space-y-4">
         <div className="space-y-2">
           <div className="overflow-x-auto pb-1 -mx-1 px-1">
             <DateTabs dates={visibleDates} selected={activeDate} onSelect={setSelectedDate} />
@@ -479,7 +480,7 @@ export function StatusTab() {
             </p>
           </div>
         )}
-      </div>
+      </Card>
 
       <EditSlotModal slot={editingSlot} onClose={() => setEditingSlot(null)} onSaved={reload} />
       <AddDateModal

@@ -19,6 +19,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { ActiveClassProvider, useActiveClass } from "@/components/providers/ActiveClassProvider";
 import { AppearanceSettingsButtons } from "@/components/settings/AppearanceSettingsButtons";
 import { DashboardHeader } from "@/components/ui/DashboardHeader";
+import { Card } from "@/components/ui/Card";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
 import { Tabs } from "@/components/ui/Tabs";
@@ -188,7 +189,7 @@ function TeacherDashboard() {
       <Tabs items={tabs} active={tab} onChange={(k) => setTab(k as TeacherTab)} />
 
       {!loading && grade == null && classNo == null && tab !== "teachers" && tab !== "cutoffs" ? (
-        <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80 space-y-2">
+        <Card padded={false} className="p-12 text-center space-y-2">
           <p className="text-sm font-bold text-slate-600">
             {isAdmin ? "아직 등록된 반이 없습니다." : "담당 반 정보를 확인할 수 없습니다."}
           </p>
@@ -197,7 +198,7 @@ function TeacherDashboard() {
               &ldquo;교사 계정 관리&rdquo;에서 담임교사를 먼저 등록하거나, 학생 명단이 있는 반을 만들어 주세요.
             </p>
           )}
-        </div>
+        </Card>
       ) : (
         <>
           {tab === "status" && <StatusTab />}

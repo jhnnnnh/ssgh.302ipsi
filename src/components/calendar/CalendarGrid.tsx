@@ -10,6 +10,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { Card } from "@/components/ui/Card";
 import { getMonthGridCells, toDateString } from "@/lib/calendar-grid";
 import { eventGroupKey } from "@/lib/calendar-group";
 import { EVENT_TYPE_LABELS, weekdayLabelClass } from "@/lib/calendar-constants";
@@ -81,7 +82,7 @@ export function CalendarGrid({
   }
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 space-y-5">
+    <Card className="space-y-5">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <button
@@ -262,6 +263,6 @@ export function CalendarGrid({
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

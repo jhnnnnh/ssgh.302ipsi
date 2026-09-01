@@ -8,6 +8,7 @@ import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { useRoster } from "@/lib/hooks/useRoster";
 import { useActiveClass } from "@/components/providers/ActiveClassProvider";
 import { AddRosterModal } from "@/components/teacher/AddRosterModal";
+import { Card } from "@/components/ui/Card";
 import { parseStudentId, parseRosterLine, formatClassLabel } from "@/lib/student-id";
 
 export function RosterTab() {
@@ -180,7 +181,7 @@ export function RosterTab() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <Card padded={false}>
         <div className="p-6 pb-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <span className="text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-full">
             총 {roster.length}명 등록됨
@@ -300,7 +301,7 @@ export function RosterTab() {
             </p>
           </div>
         )}
-      </div>
+      </Card>
 
       <AddRosterModal
         open={addModalOpen}

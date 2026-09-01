@@ -28,6 +28,7 @@ import { useStatusReveal } from "@/lib/hooks/useStatusReveal";
 import { useEqualHeights } from "@/lib/hooks/useEqualHeights";
 import { useRankAutoAssign } from "@/lib/hooks/useRankAutoAssign";
 import { useActiveClass } from "@/components/providers/ActiveClassProvider";
+import { Card } from "@/components/ui/Card";
 import { SortableWonseoCard } from "@/components/wonseo/SortableWonseoCard";
 import { WonseoCardView } from "@/components/wonseo/WonseoCardView";
 import { WonseoCardModal } from "@/components/wonseo/WonseoCardModal";
@@ -233,7 +234,7 @@ export function WonseoManageTab() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-5">
+      <Card className="space-y-5">
         {isAdmin && (
           <div className="flex justify-end border-b border-slate-100 pb-4">
             <button
@@ -398,7 +399,7 @@ export function WonseoManageTab() {
             <WonseoTableView roster={roster} cards={allCards} />
           </div>
         )}
-      </div>
+      </Card>
 
       {selectedStudentId && (
         <WonseoCardModal

@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useCalendarEvents, type ResolvedCalendarEvent } from "@/lib/hooks/useCalendarEvents";
 import { importWonseoCalendarEvents } from "@/lib/calendar-import";
 import { CalendarGrid } from "@/components/calendar/CalendarGrid";
+import { Card } from "@/components/ui/Card";
 import { CalendarEventModal } from "@/components/calendar/CalendarEventModal";
 import type { CalendarEventType } from "@/lib/database.types";
 
@@ -80,9 +81,9 @@ export function TeacherCalendarTab() {
 
   if (!profile || grade == null || classNo == null) {
     return (
-      <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80">
+      <Card padded={false} className="p-12 text-center">
         <p className="text-sm font-bold text-slate-600">담당 반 정보를 확인할 수 없습니다.</p>
-      </div>
+      </Card>
     );
   }
 
