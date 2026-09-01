@@ -116,14 +116,14 @@ export function getFontSizeAdjustByKey(key: string | null | undefined): number {
 }
 
 /**
- * 폰트 종류와 별개로 글자 크기만 조절하는 5단계. 한 단계당 5%씩만 바뀌게 해서
- * 단계 사이 체감 차이를 작게 유지한다(전체 범위 -2~+2단계 = 약 90.7%~110.3%).
+ * 폰트 종류와 별개로 글자 크기만 조절하는 5단계. 한 단계당 7%씩 바뀐다
+ * (전체 범위 -2~+2단계 = 약 87.3%~114.5%).
  */
 export const FONT_SIZE_LEVELS = [-2, -1, 0, 1, 2] as const;
 export type FontSizeLevel = (typeof FONT_SIZE_LEVELS)[number];
 export const DEFAULT_FONT_SIZE_LEVEL: FontSizeLevel = 0;
 
-const FONT_SIZE_STEP = 1.05;
+const FONT_SIZE_STEP = 1.07;
 
 export function getFontSizeMultiplierByLevel(level: number | null | undefined): number {
   const clamped = Math.min(2, Math.max(-2, level ?? 0));

@@ -14,11 +14,11 @@ import {
 } from "@/lib/font-options";
 
 const FONT_SIZE_LABELS: Record<FontSizeLevel, string> = {
-  [-2]: "매우 작게",
-  [-1]: "작게",
-  [0]: "보통",
-  [1]: "크게",
-  [2]: "매우 크게",
+  [-2]: "1",
+  [-1]: "2",
+  [0]: "3",
+  [1]: "4",
+  [2]: "5",
 };
 
 const DEFAULT_SWATCH = "#16366b";
