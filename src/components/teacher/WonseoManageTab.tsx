@@ -312,7 +312,7 @@ export function WonseoManageTab() {
                   </button>
                   <button
                     onClick={openCreate}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition shadow-2xs flex items-center gap-1.5"
+                    className="pl-3.5 pr-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition shadow-2xs flex items-center gap-1.5"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>원서 추가</span>
