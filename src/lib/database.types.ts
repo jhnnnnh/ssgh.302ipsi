@@ -39,6 +39,8 @@ export type Profile = {
   font_family: string | null;
   /** 폰트 종류와 별개로 글자 크기만 조절하는 5단계(-2~+2, 0=보통) 값. */
   font_size_level: number;
+  /** 폰트 종류와 별개로 글자 굵기(font-bold)만 조절하는 3단계(-1~+1, 0=보통) 값. */
+  font_weight_level: number;
   teacher_role: TeacherRole | null;
   grade: number | null;
   class_no: number | null;
@@ -223,6 +225,7 @@ export type Database = {
               | "theme_color"
               | "font_family"
               | "font_size_level"
+              | "font_weight_level"
               | "teacher_role"
               | "grade"
               | "class_no"

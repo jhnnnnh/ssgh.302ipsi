@@ -18,6 +18,14 @@ export type FontOption = {
    * 0.35로 가중 평균해 산출했다(사람이 "크기"를 판단할 때 높이 영향이 더 커서).
    */
   sizeAdjust: number;
+  /**
+   * "글자 굵기" 3단계([얇게, 보통, 굵게])에서 .font-bold에 실제로 적용할 font-weight.
+   * 그 폰트가 실제로 로드한 굵기 파일 중에서만 골랐다 — 없는 굵기를 요청하면 브라우저가
+   * 가짜 굵게(synthetic bold)를 만들어 한글이 뭉개져 보일 수 있어서다. 그래서 굵기가
+   * 1~2종류뿐인 폰트는 단계 몇 개가 같은 값으로 겹친다(그만큼은 조절해도 그대로 보임).
+   * [1]번째 값(보통)은 이 기능이 생기기 전 기본 동작과 항상 같다.
+   */
+  boldWeights: readonly [number, number, number];
 };
 
 export const DEFAULT_FONT_KEY = "pretendard";
@@ -28,78 +36,91 @@ export const FONT_OPTIONS: FontOption[] = [
     label: "Pretendard (기본값)",
     cssFamily: "'Pretendard', sans-serif",
     sizeAdjust: 1,
+    boldWeights: [700, 800, 900],
   },
   {
     key: "noto-sans-kr",
     label: "Noto Sans KR",
     cssFamily: "var(--font-noto-sans-kr), 'Pretendard', sans-serif",
     sizeAdjust: 0.976,
+    boldWeights: [700, 700, 900],
   },
   {
     key: "scdream",
     label: "에스코어 드림 (SCDream)",
     cssFamily: "'SCDream', 'Pretendard', sans-serif",
     sizeAdjust: 0.916,
+    boldWeights: [800, 800, 800],
   },
   {
     key: "nanum-square",
     label: "나눔스퀘어 (NanumSquare)",
     cssFamily: "'NanumSquare', 'Pretendard', sans-serif",
     sizeAdjust: 0.954,
+    boldWeights: [700, 700, 700],
   },
   {
     key: "hahmlet",
     label: "함렡 (Hahmlet)",
     cssFamily: "var(--font-hahmlet), 'Pretendard', sans-serif",
     sizeAdjust: 0.979,
+    boldWeights: [700, 700, 900],
   },
   {
     key: "joseon-gungseo",
     label: "조선궁서체 (Joseon Gungseo)",
     cssFamily: "'JoseonGungseo', 'Pretendard', sans-serif",
     sizeAdjust: 0.923,
+    boldWeights: [700, 700, 700],
   },
   {
     key: "sd-unicef-dodam",
     label: "SD 유니세프 도담체",
     cssFamily: "'SDUnicefDodam', 'Pretendard', sans-serif",
     sizeAdjust: 1.111,
+    boldWeights: [700, 700, 700],
   },
   {
     key: "gyeonggi-cheonnyeon-batang",
     label: "경기천년바탕",
     cssFamily: "'GyeonggiCheonnyeonBatang', 'Pretendard', sans-serif",
     sizeAdjust: 0.927,
+    boldWeights: [700, 700, 700],
   },
   {
     key: "lee-seoyoon",
     label: "이서윤체",
     cssFamily: "'LeeSeoyoon', 'Pretendard', sans-serif",
     sizeAdjust: 1.1,
+    boldWeights: [700, 700, 700],
   },
   {
     key: "moneygraphy",
     label: "머니그라피",
     cssFamily: "'Moneygraphy', 'Pretendard', sans-serif",
     sizeAdjust: 0.955,
+    boldWeights: [700, 700, 700],
   },
   {
     key: "gmarket-sans",
     label: "G마켓 산스",
     cssFamily: "'GmarketSans', 'Pretendard', sans-serif",
     sizeAdjust: 0.965,
+    boldWeights: [500, 700, 700],
   },
   {
     key: "bm-dohyeon",
     label: "배민 도현체",
     cssFamily: "'BMDoHyeon', 'Pretendard', sans-serif",
     sizeAdjust: 0.883,
+    boldWeights: [700, 700, 700],
   },
   {
     key: "okdd-gothic",
     label: "Ok단단체",
     cssFamily: "'OKDDGothic', 'Pretendard', sans-serif",
     sizeAdjust: 1.126,
+    boldWeights: [700, 700, 700],
   },
 ];
 
@@ -128,4 +149,17 @@ const FONT_SIZE_STEP = 1.07;
 export function getFontSizeMultiplierByLevel(level: number | null | undefined): number {
   const clamped = Math.min(2, Math.max(-2, level ?? 0));
   return FONT_SIZE_STEP ** clamped;
+}
+
+/** 폰트 종류와 별개로 글자 굵기(.font-bold)만 조절하는 3단계(얇게/보통/굵게). */
+export const FONT_WEIGHT_LEVELS = [-1, 0, 1] as const;
+export type FontWeightLevel = (typeof FONT_WEIGHT_LEVELS)[number];
+export const DEFAULT_FONT_WEIGHT_LEVEL: FontWeightLevel = 0;
+
+export function getFontBoldWeightByKey(
+  key: string | null | undefined,
+  level: number | null | undefined,
+): number {
+  const clamped = Math.min(1, Math.max(-1, level ?? 0));
+  return getFontOptionByKey(key).boldWeights[clamped + 1];
 }

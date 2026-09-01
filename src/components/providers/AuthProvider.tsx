@@ -7,6 +7,7 @@ import type { Profile } from "@/lib/database.types";
 import { buildThemeColorVars } from "@/lib/theme-color";
 import {
   DEFAULT_FONT_KEY,
+  getFontBoldWeightByKey,
   getFontFamilyByKey,
   getFontSizeAdjustByKey,
   getFontSizeMultiplierByLevel,
@@ -83,6 +84,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const fontAdjust = profile ? getFontSizeAdjustByKey(profile.font_family) : 1;
     const sizeLevelAdjust = getFontSizeMultiplierByLevel(profile?.font_size_level);
     document.documentElement.style.setProperty("--font-scale", String(fontAdjust * sizeLevelAdjust));
+    const boldWeight = getFontBoldWeightByKey(profile?.font_family, profile?.font_weight_level);
+    document.documentElement.style.setProperty("--font-bold-weight", String(boldWeight));
   }, [profile]);
 
   const themeVars = profile?.theme_color ? buildThemeColorVars(profile.theme_color) : null;

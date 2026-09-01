@@ -7,19 +7,16 @@ import { cn } from "@/lib/cn";
 import {
   DEFAULT_FONT_KEY,
   DEFAULT_FONT_SIZE_LEVEL,
+  DEFAULT_FONT_WEIGHT_LEVEL,
   FONT_OPTIONS,
   FONT_SIZE_LEVELS,
+  FONT_WEIGHT_LEVELS,
+  getFontBoldWeightByKey,
+  getFontOptionByKey,
   getFontSizeMultiplierByLevel,
   type FontSizeLevel,
+  type FontWeightLevel,
 } from "@/lib/font-options";
-
-const FONT_SIZE_LABELS: Record<FontSizeLevel, string> = {
-  [-2]: "1",
-  [-1]: "2",
-  [0]: "3",
-  [1]: "4",
-  [2]: "5",
-};
 
 const DEFAULT_SWATCH = "#16366b";
 const PREVIEW_TEXT = "가나다 ABC 123";
@@ -30,6 +27,7 @@ export function AppearanceSettingsModal({
   currentColor,
   currentFontKey,
   currentFontSizeLevel,
+  currentFontWeightLevel,
   onSave,
 }: {
   open: boolean;
@@ -37,12 +35,21 @@ export function AppearanceSettingsModal({
   currentColor: string | null;
   currentFontKey: string | null;
   currentFontSizeLevel: number | null;
-  onSave: (hex: string | null, fontKey: string | null, fontSizeLevel: number) => Promise<void>;
+  currentFontWeightLevel: number | null;
+  onSave: (
+    hex: string | null,
+    fontKey: string | null,
+    fontSizeLevel: number,
+    fontWeightLevel: number,
+  ) => Promise<void>;
 }) {
   const [color, setColor] = useState(currentColor ?? DEFAULT_SWATCH);
   const [selectedFont, setSelectedFont] = useState(currentFontKey ?? DEFAULT_FONT_KEY);
   const [selectedSizeLevel, setSelectedSizeLevel] = useState<FontSizeLevel>(
     (currentFontSizeLevel as FontSizeLevel) ?? DEFAULT_FONT_SIZE_LEVEL,
+  );
+  const [selectedWeightLevel, setSelectedWeightLevel] = useState<FontWeightLevel>(
+    (currentFontWeightLevel as FontWeightLevel) ?? DEFAULT_FONT_WEIGHT_LEVEL,
   );
   const [saving, setSaving] = useState(false);
 
@@ -50,18 +57,22 @@ export function AppearanceSettingsModal({
     hex: string | null,
     fontKey: string = selectedFont,
     fontSizeLevel: FontSizeLevel = selectedSizeLevel,
+    fontWeightLevel: FontWeightLevel = selectedWeightLevel,
   ) {
     setSaving(true);
-    await onSave(hex, fontKey === DEFAULT_FONT_KEY ? null : fontKey, fontSizeLevel);
+    await onSave(hex, fontKey === DEFAULT_FONT_KEY ? null : fontKey, fontSizeLevel, fontWeightLevel);
     setSaving(false);
     onClose();
   }
+
+  const hasWeightOptions = new Set(getFontOptionByKey(selectedFont).boldWeights).size > 1;
 
   function handleReset() {
     setColor(DEFAULT_SWATCH);
     setSelectedFont(DEFAULT_FONT_KEY);
     setSelectedSizeLevel(DEFAULT_FONT_SIZE_LEVEL);
-    handleSave(null, DEFAULT_FONT_KEY, DEFAULT_FONT_SIZE_LEVEL);
+    setSelectedWeightLevel(DEFAULT_FONT_WEIGHT_LEVEL);
+    handleSave(null, DEFAULT_FONT_KEY, DEFAULT_FONT_SIZE_LEVEL, DEFAULT_FONT_WEIGHT_LEVEL);
   }
 
   return (
@@ -137,20 +148,15 @@ export function AppearanceSettingsModal({
       </div>
 
       <div>
-        <label className="block font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-          <span>글자 크기</span>
-          <span className="text-[11px] font-bold text-indigo-500">
-            {FONT_SIZE_LABELS[selectedSizeLevel]}
-          </span>
-        </label>
-        <div className="grid grid-cols-5 gap-1.5">
+        <label className="block font-bold text-slate-700 mb-1.5">글자 크기</label>
+        <div className="flex gap-1.5">
           {FONT_SIZE_LEVELS.map((level) => (
             <button
               key={level}
               type="button"
               onClick={() => setSelectedSizeLevel(level)}
               className={cn(
-                "flex items-center justify-center h-12 rounded-2xl border transition",
+                "flex items-center justify-center w-8 h-8 rounded-lg border transition",
                 selectedSizeLevel === level
                   ? "bg-indigo-50 border-indigo-400 ring-1 ring-indigo-400"
                   : "bg-white border-slate-200 hover:bg-slate-50",
@@ -158,7 +164,7 @@ export function AppearanceSettingsModal({
             >
               <span
                 className="font-bold text-slate-900"
-                style={{ fontSize: `${0.75 * getFontSizeMultiplierByLevel(level)}rem` }}
+                style={{ fontSize: `${0.6875 * getFontSizeMultiplierByLevel(level)}rem` }}
               >
                 가
               </span>
@@ -166,6 +172,34 @@ export function AppearanceSettingsModal({
           ))}
         </div>
       </div>
+
+      {hasWeightOptions && (
+        <div>
+          <label className="block font-bold text-slate-700 mb-1.5">글자 굵기</label>
+          <div className="flex gap-1.5">
+            {FONT_WEIGHT_LEVELS.map((level) => (
+              <button
+                key={level}
+                type="button"
+                onClick={() => setSelectedWeightLevel(level)}
+                className={cn(
+                  "flex items-center justify-center w-8 h-8 rounded-lg border transition",
+                  selectedWeightLevel === level
+                    ? "bg-indigo-50 border-indigo-400 ring-1 ring-indigo-400"
+                    : "bg-white border-slate-200 hover:bg-slate-50",
+                )}
+              >
+                <span
+                  className="text-[11px] text-slate-900"
+                  style={{ fontWeight: getFontBoldWeightByKey(selectedFont, level) }}
+                >
+                  가
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </Modal>
   );
 }

@@ -17,12 +17,22 @@ export function AppearanceSettingsButtons({
   const showToast = useToast();
   const [modalOpen, setModalOpen] = useState(false);
 
-  async function handleSave(hex: string | null, fontKey: string | null, fontSizeLevel: number) {
+  async function handleSave(
+    hex: string | null,
+    fontKey: string | null,
+    fontSizeLevel: number,
+    fontWeightLevel: number,
+  ) {
     if (!session) return;
     const supabase = createClient();
     const { error } = await supabase
       .from("profiles")
-      .update({ theme_color: hex, font_family: fontKey, font_size_level: fontSizeLevel })
+      .update({
+        theme_color: hex,
+        font_family: fontKey,
+        font_size_level: fontSizeLevel,
+        font_weight_level: fontWeightLevel,
+      })
       .eq("id", session.user.id);
     if (error) {
       showToast("설정 저장에 실패했습니다.", "error");
@@ -44,6 +54,7 @@ export function AppearanceSettingsButtons({
         currentColor={profile?.theme_color ?? null}
         currentFontKey={profile?.font_family ?? null}
         currentFontSizeLevel={profile?.font_size_level ?? null}
+        currentFontWeightLevel={profile?.font_weight_level ?? null}
         onSave={handleSave}
       />
     </>
