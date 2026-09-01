@@ -301,21 +301,21 @@ export function WonseoManageTab() {
                   <button
                     onClick={handleToggleAutoAssign}
                     className={cn(
-                      "px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5",
+                      "px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1.5",
                       autoAssign
                         ? "bg-indigo-600 hover:bg-indigo-700 text-white"
                         : "bg-slate-100 hover:bg-slate-200 text-slate-600",
                     )}
                   >
                     <Wand2 className="w-3.5 h-3.5" />
-                    <span>지망 순위 자동 배정</span>
+                    <span>N지망 정렬</span>
                   </button>
                   <button
                     onClick={openCreate}
                     className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition shadow-2xs flex items-center gap-1.5"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>수시 원서 추가</span>
+                    <span>원서 추가</span>
                   </button>
                 </div>
               )}

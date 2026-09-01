@@ -189,21 +189,21 @@ export function WonseoTab({ studentId }: { studentId: string }) {
           <button
             onClick={handleToggleAutoAssign}
             className={cn(
-              "px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5",
+              "px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1.5",
               autoAssign
                 ? "bg-indigo-600 hover:bg-indigo-700 text-white"
                 : "bg-slate-100 hover:bg-slate-200 text-slate-600",
             )}
           >
             <Wand2 className="w-3.5 h-3.5" />
-            <span>지망 순위 자동 배정</span>
+            <span>N지망 정렬</span>
           </button>
           <button
             onClick={openCreate}
-            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-sm font-bold transition shadow-xs flex items-center gap-2"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition shadow-xs flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>수시 원서 카드 추가</span>
+            <span>원서 추가</span>
           </button>
         </div>
       </div>
@@ -260,7 +260,7 @@ export function WonseoTab({ studentId }: { studentId: string }) {
             등록된 수시 원서 카드가 없습니다.
           </h4>
           <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
-            상단의 <strong className="text-indigo-600">[수시 원서 카드 추가]</strong> 버튼을
+            상단의 <strong className="text-indigo-600">[원서 추가]</strong> 버튼을
             눌러 지망 순위별 대학 및 모집단위 정보를 등록해 보세요.
           </p>
         </div>

@@ -79,8 +79,8 @@ function TeacherDashboard() {
   const tabs = [
     { key: "status", label: "상담 신청 현황", icon: <ListChecks className="w-4 h-4" /> },
     { key: "wonseo", label: "수시 원서 관리", icon: <GraduationCap className="w-4 h-4" /> },
-    { key: "roster", label: "학생 명단 관리", icon: <UsersRound className="w-4 h-4" /> },
     { key: "calendar", label: "입시 일정", icon: <CalendarDays className="w-4 h-4" /> },
+    { key: "roster", label: "학생 명단 관리", icon: <UsersRound className="w-4 h-4" /> },
     ...(isAdmin
       ? [
           { key: "teachers", label: "교사 계정 관리", icon: <UserCog className="w-4 h-4" /> },
