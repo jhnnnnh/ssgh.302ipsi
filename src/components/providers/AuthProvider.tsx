@@ -9,6 +9,7 @@ import {
   DEFAULT_FONT_KEY,
   getFontFamilyByKey,
   getFontSizeAdjustByKey,
+  getFontSizeMultiplierByLevel,
 } from "@/lib/font-options";
 
 interface AuthContextValue {
@@ -72,13 +73,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null);
   };
 
-  // 폰트마다 같은 font-size에서도 실제 보이는 크기가 달라서, rem의 기준인 <html> 루트
-  // font-size에 선택한 폰트 고유의 보정 배율(sizeAdjust)을 곱해 "보이는 크기"를 통일한다.
-  // (색상/폰트 종류처럼 하위 트리에 CSS 변수를 얹는 방식으로는 rem에 닿지 않아 예외적으로
-  // document.documentElement에 직접 적용한다.)
+  // 폰트마다 같은 font-size에서도 실제 보이는 크기가 달라서, 선택한 폰트 고유의 보정
+  // 배율(sizeAdjust)에 사용자가 직접 고른 글자 크기 단계(font_size_level, 5% 단위)를
+  // 곱해 --font-scale로 내려보낸다. globals.css가 이 값을 text-* 유틸리티 크기에만
+  // 곱하고 레이아웃(rem 기반 패딩·간격 등)에는 닿지 않게 해서, 버튼·표 크기는 고정된 채
+  // 글자 크기만 보정된다. (색상/폰트 종류처럼 하위 트리에 CSS 변수를 얹는 방식으로는
+  // rem에 닿지 않아 예외적으로 document.documentElement에 직접 적용한다.)
   useEffect(() => {
     const fontAdjust = profile ? getFontSizeAdjustByKey(profile.font_family) : 1;
-    document.documentElement.style.setProperty("--font-scale", String(fontAdjust));
+    const sizeLevelAdjust = getFontSizeMultiplierByLevel(profile?.font_size_level);
+    document.documentElement.style.setProperty("--font-scale", String(fontAdjust * sizeLevelAdjust));
   }, [profile]);
 
   const themeVars = profile?.theme_color ? buildThemeColorVars(profile.theme_color) : null;

@@ -22,16 +22,34 @@
   --color-indigo-950: #0d203f;
 }
 
-/* 앱 전체가 rem 단위(text-xs 등)를 쓰므로, 글씨 크기 설정은 rem의 기준이 되는
-   루트 font-size 자체를 배율만큼 조정해서 반영한다. */
-html {
-  font-size: calc(16px * var(--font-scale));
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
+}
+
+/* 폰트별 보정(--font-scale)은 글자 크기(text-* 유틸리티)에만 곱해서 적용한다. 예전에는
+   루트 font-size 자체를 곱했는데, 버튼 패딩·표 행 높이·간격 등 rem 기반 레이아웃까지
+   전부 같은 루트에 얹혀 있어서 폰트를 바꾸면 글자뿐 아니라 화면 전체 크기가 최대 27%까지
+   같이 늘었다 줄었다 하는 부작용이 있었다. Tailwind의 기본 text-* 크기 토큰을 여기서
+   재정의해 두면(‌@theme는 non-inline이라 계산식이 런타임 CSS 변수로 남는다) 레이아웃은
+   고정된 채 글자만 폰트에 맞게 커지거나 작아진다.
+   (@theme inline인 위 블록과 이 블록을 분리한 이유: inline은 값을 빌드 타임에 그대로
+   박아 넣어서 var(--font-scale)을 담은 계산식이 살아남지 못한다.) */
+@theme {
+  --text-xs: calc(0.75rem * var(--font-scale));
+  --text-sm: calc(0.875rem * var(--font-scale));
+  --text-base: calc(1rem * var(--font-scale));
+  --text-lg: calc(1.125rem * var(--font-scale));
+  --text-xl: calc(1.25rem * var(--font-scale));
+  --text-2xl: calc(1.5rem * var(--font-scale));
+  --text-3xl: calc(1.875rem * var(--font-scale));
+  --text-4xl: calc(2.25rem * var(--font-scale));
+  --text-5xl: calc(3rem * var(--font-scale));
+  --text-6xl: calc(3.75rem * var(--font-scale));
+  --text-7xl: calc(4.5rem * var(--font-scale));
+  --text-8xl: calc(6rem * var(--font-scale));
+  --text-9xl: calc(8rem * var(--font-scale));
 }
 
 /* Tailwind의 기본 .border 유틸리티는 border-width: 1px로 고정돼 있어 테마 변수로

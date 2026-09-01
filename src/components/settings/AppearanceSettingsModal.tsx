@@ -4,7 +4,22 @@ import { useState } from "react";
 import { RotateCcw, Settings } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/cn";
-import { DEFAULT_FONT_KEY, FONT_OPTIONS } from "@/lib/font-options";
+import {
+  DEFAULT_FONT_KEY,
+  DEFAULT_FONT_SIZE_LEVEL,
+  FONT_OPTIONS,
+  FONT_SIZE_LEVELS,
+  getFontSizeMultiplierByLevel,
+  type FontSizeLevel,
+} from "@/lib/font-options";
+
+const FONT_SIZE_LABELS: Record<FontSizeLevel, string> = {
+  [-2]: "매우 작게",
+  [-1]: "작게",
+  [0]: "보통",
+  [1]: "크게",
+  [2]: "매우 크게",
+};
 
 const DEFAULT_SWATCH = "#16366b";
 const PREVIEW_TEXT = "가나다 ABC 123";
@@ -14,21 +29,30 @@ export function AppearanceSettingsModal({
   onClose,
   currentColor,
   currentFontKey,
+  currentFontSizeLevel,
   onSave,
 }: {
   open: boolean;
   onClose: () => void;
   currentColor: string | null;
   currentFontKey: string | null;
-  onSave: (hex: string | null, fontKey: string | null) => Promise<void>;
+  currentFontSizeLevel: number | null;
+  onSave: (hex: string | null, fontKey: string | null, fontSizeLevel: number) => Promise<void>;
 }) {
   const [color, setColor] = useState(currentColor ?? DEFAULT_SWATCH);
   const [selectedFont, setSelectedFont] = useState(currentFontKey ?? DEFAULT_FONT_KEY);
+  const [selectedSizeLevel, setSelectedSizeLevel] = useState<FontSizeLevel>(
+    (currentFontSizeLevel as FontSizeLevel) ?? DEFAULT_FONT_SIZE_LEVEL,
+  );
   const [saving, setSaving] = useState(false);
 
-  async function handleSave(hex: string | null, fontKey: string = selectedFont) {
+  async function handleSave(
+    hex: string | null,
+    fontKey: string = selectedFont,
+    fontSizeLevel: FontSizeLevel = selectedSizeLevel,
+  ) {
     setSaving(true);
-    await onSave(hex, fontKey === DEFAULT_FONT_KEY ? null : fontKey);
+    await onSave(hex, fontKey === DEFAULT_FONT_KEY ? null : fontKey, fontSizeLevel);
     setSaving(false);
     onClose();
   }
@@ -36,7 +60,8 @@ export function AppearanceSettingsModal({
   function handleReset() {
     setColor(DEFAULT_SWATCH);
     setSelectedFont(DEFAULT_FONT_KEY);
-    handleSave(null, DEFAULT_FONT_KEY);
+    setSelectedSizeLevel(DEFAULT_FONT_SIZE_LEVEL);
+    handleSave(null, DEFAULT_FONT_KEY, DEFAULT_FONT_SIZE_LEVEL);
   }
 
   return (
@@ -105,6 +130,37 @@ export function AppearanceSettingsModal({
                 style={{ fontFamily: font.cssFamily, fontSize: `${font.sizeAdjust}rem` }}
               >
                 {PREVIEW_TEXT}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="block font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+          <span>글자 크기</span>
+          <span className="text-[11px] font-bold text-indigo-500">
+            {FONT_SIZE_LABELS[selectedSizeLevel]}
+          </span>
+        </label>
+        <div className="grid grid-cols-5 gap-1.5">
+          {FONT_SIZE_LEVELS.map((level) => (
+            <button
+              key={level}
+              type="button"
+              onClick={() => setSelectedSizeLevel(level)}
+              className={cn(
+                "flex items-center justify-center h-12 rounded-2xl border transition",
+                selectedSizeLevel === level
+                  ? "bg-indigo-50 border-indigo-400 ring-1 ring-indigo-400"
+                  : "bg-white border-slate-200 hover:bg-slate-50",
+              )}
+            >
+              <span
+                className="font-bold text-slate-900"
+                style={{ fontSize: `${0.75 * getFontSizeMultiplierByLevel(level)}rem` }}
+              >
+                가
               </span>
             </button>
           ))}
