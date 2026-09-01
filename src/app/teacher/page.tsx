@@ -29,7 +29,7 @@ import { RosterTab } from "@/components/teacher/RosterTab";
 import { TeacherCalendarTab } from "@/components/teacher/TeacherCalendarTab";
 import { TeacherManageTab } from "@/components/teacher/TeacherManageTab";
 import { AdmissionCutoffUploadTab } from "@/components/teacher/AdmissionCutoffUploadTab";
-import { AdmissionMethodUploadTab } from "@/components/teacher/AdmissionMethodUploadTab";
+import { AdmissionOfferingUploadTab } from "@/components/teacher/AdmissionOfferingUploadTab";
 import { ChangePasswordModal } from "@/components/teacher/ChangePasswordModal";
 import { ManualHelpModal } from "@/components/teacher/ManualHelpModal";
 import { formatClassLabel } from "@/lib/student-id";
@@ -211,7 +211,7 @@ function TeacherDashboard() {
       {tab === "cutoffs" && isAdmin && (
         <div className="space-y-5">
           <AdmissionCutoffUploadTab />
-          <AdmissionMethodUploadTab />
+          <AdmissionOfferingUploadTab />
         </div>
       )}
 

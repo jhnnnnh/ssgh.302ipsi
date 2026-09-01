@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { GraduationCap, Paperclip } from "lucide-react";
+import { Download, GraduationCap, Paperclip } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { AutocompleteInput } from "@/components/ui/AutocompleteInput";
 import { createClient } from "@/lib/supabase/client";
@@ -9,19 +9,16 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { WonseoImageThumb } from "@/components/wonseo/WonseoImageThumb";
 import { RecentResultsEditor } from "@/components/wonseo/RecentResultsEditor";
 import {
-  currentAdmissionYear,
-  describeAdmissionType,
-  fetchCutoffsForType,
-  fetchExactCutoffs,
+  fetchRecentResultsBestEffort,
   mergeCutoffsIntoYears,
-  searchCutoffCandidates,
   trackFromCategory,
-  type AdmissionTypeOption,
-  type CutoffCandidate,
-  type CutoffMatch,
 } from "@/lib/admission-cutoff-lookup";
-import { findAdmissionMethod } from "@/lib/admission-method-lookup";
-import { summarizeMinStandard } from "@/lib/min-standard-format";
+import {
+  findOfferingMatch,
+  listOfferingCandidates,
+  trackForOffering,
+  type MergedOffering,
+} from "@/lib/admission-offering-lookup";
 import { emptyResultYear } from "@/components/wonseo/RecentResultsTable";
 import { buildStoragePath, deleteWonseoImageFile, uploadWonseoImage } from "@/lib/wonseo-storage";
 import {
@@ -29,7 +26,7 @@ import {
   searchAdmissionTypes,
   searchDepartments,
   searchUniversities,
-} from "@/lib/admission-cutoff-autocomplete";
+} from "@/lib/admission-offering-autocomplete";
 import {
   LEVEL_OPTIONS,
   LEVEL_TOGGLE_STYLE,
@@ -145,11 +142,7 @@ export function WonseoCardModal({
   const [universityError, setUniversityError] = useState(false);
   const universityRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
-  const [candidates, setCandidates] = useState<CutoffCandidate[] | null>(null);
-  const [typeOptions, setTypeOptions] = useState<AdmissionTypeOption[] | null>(null);
-  const [pendingMatch, setPendingMatch] = useState<{ university: string; department: string } | null>(
-    null,
-  );
+  const [offeringOptions, setOfferingOptions] = useState<MergedOffering[] | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -179,74 +172,80 @@ export function WonseoCardModal({
   }
 
   /**
-   * 입결 데이터를 찾으면 대학교명/모집단위/전형 유형/세부 전형명과 최근 입결 표까지 한 번에
-   * 채운다. 카드 상단 모집인원은 예외로, 불러온 가장 최근 연도가 실제 이번 입시 연도(예:
-   * 2027학년도 지원이면 2027)와 정확히 같을 때만 채운다 — 입결 데이터는 항상 그 전해까지의
-   * 결과만 있어서, 최근 연도라고 무조건 채우면 사실은 작년 모집인원인데 올해 것처럼 보인다.
-   * "나의 상대적 위치"는 학생이 직접 쓰는 값이라 절대 건드리지 않는다.
+   * 확인 모달에서 사용자가 실제로 골랐을 때만 호출된다. offering을 카드 필드(세부 전형명/
+   * 전형 유형/전형방법/수능최저학력기준/모집인원)에 채우고, 같은 대학·학과·전형으로 최근
+   * 3개년 입결도 조용히 함께 채운다 — 확인 한 번으로 2027학년도 전형데이터와 2024~2026학년도
+   * 입결이 한꺼번에 나오는 구조. 최근입결이 애매하면(전형명 표기가 두 원본 사이에서 다를 수
+   * 있어) 가장 비슷한 것 하나만 골라서 채우고, 그마저 안 되면 다시 묻지 않고 비워 둔다. 전부
+   * 그대로 수정 가능(읽기 전용 아님).
    */
-  async function applyImportedResult(
-    matchUniversity: string,
-    matchDepartment: string,
-    years: CutoffMatch[],
-    admissionType: string | null,
-  ) {
-    const desc = admissionType ? describeAdmissionType(admissionType) : null;
-    const methodMatch = desc
-      ? await findAdmissionMethod(matchUniversity, desc.category, desc.subCategory)
-      : null;
+  async function applyOffering(university: string, department: string, offering: MergedOffering) {
     setForm((f) => ({
       ...f,
-      university: matchUniversity,
-      department: matchDepartment,
-      enrollment:
-        years[0]?.year === currentAdmissionYear() ? (years[0]?.enrollment ?? f.enrollment) : f.enrollment,
-      category: desc?.category || f.category,
-      subCategory: desc ? desc.subCategory : f.subCategory,
-      recentResults: mergeCutoffsIntoYears(f.recentResults, years),
-      ...(methodMatch?.method
-        ? { selectionMode: "single" as const, stageSingle: methodMatch.method }
-        : {}),
-      ...(methodMatch?.min_standard
-        ? { minStandard: summarizeMinStandard(methodMatch.min_standard) ?? methodMatch.min_standard }
-        : {}),
+      subCategory: offering.admissionType || f.subCategory,
+      category: offering.track || f.category,
+      enrollment: offering.enrollment != null ? String(offering.enrollment) : f.enrollment,
+      minStandard: offering.minStandard || f.minStandard,
+      selectionMode: offering.selectionMode,
+      stageSingle: offering.selectionMode === "single" ? offering.methodSingle || f.stageSingle : f.stageSingle,
+      stage1: offering.selectionMode === "multi" ? offering.methodStage1 || f.stage1 : f.stage1,
+      stage2: offering.selectionMode === "multi" ? offering.methodStage2 || f.stage2 : f.stage2,
     }));
-    const typeLabel = admissionType ? ` ${admissionType}` : "";
-    showToast(`${matchUniversity} ${matchDepartment}${typeLabel} 데이터를 불러옵니다.`, "success");
+    setOfferingOptions(null);
+    showToast(`${offering.admissionType} 전형 정보를 불러옵니다.`, "success");
+
+    const years = await fetchRecentResultsBestEffort(
+      university,
+      department,
+      trackFromCategory(offering.track),
+      offering.admissionType,
+    );
+    if (years.length > 0) {
+      setForm((f) => ({ ...f, recentResults: mergeCutoffsIntoYears(f.recentResults, years) }));
+    }
   }
 
-  async function resolveMatch(matchUniversity: string, matchDepartment: string) {
-    const result = await fetchExactCutoffs(matchUniversity, matchDepartment, trackFromCategory(form.category));
+  /** 후보를 확인 모달에 띄운다. 하나도 없으면 안내만 하고 모달은 띄우지 않는다. */
+  function presentOfferingOptions(candidates: MergedOffering[]) {
+    if (candidates.length === 0) {
+      showToast("일치하는 전형 정보를 찾을 수 없습니다. 직접 입력해주세요.", "error");
+      return;
+    }
+    setOfferingOptions(candidates);
+  }
+
+  /**
+   * 대학+모집단위+세부전형명이 모두 채워졌을 때(정확 매칭)만 쓴다. 셋 중 하나라도 비어
+   * 있으면 조용히 아무것도 하지 않는다. 매칭 결과가 하나뿐이어도 바로 채우지 않고 확인
+   * 모달을 띄운다 — 매칭이 틀렸을 가능성이 있으니 반영 전에 항상 사용자가 확인한다.
+   */
+  async function applyOfferingMatch(university: string, department: string, admissionType: string) {
+    const uni = university.trim();
+    const dept = department.trim();
+    const type = admissionType.trim();
+    if (!uni || !dept || !type) return;
+    const result = await findOfferingMatch(uni, dept, type);
     if (result.kind === "none") {
-      const found = await searchCutoffCandidates(matchUniversity, matchDepartment);
-      if (found.length === 0) {
-        showToast("일치하는 입결 데이터를 찾을 수 없습니다. 직접 입력해주세요.", "error");
-        return;
-      }
-      setCandidates(found);
+      showToast("일치하는 전형 정보를 찾을 수 없습니다. 직접 입력해주세요.", "error");
       return;
     }
-    if (result.kind === "choose_type") {
-      setPendingMatch({ university: matchUniversity, department: matchDepartment });
-      setTypeOptions(result.options);
-      return;
-    }
-    await applyImportedResult(matchUniversity, matchDepartment, result.years, result.admissionType);
+    presentOfferingOptions(result.kind === "matched" ? [result.offering] : result.options);
   }
 
-  async function applyType(admissionType: string) {
-    if (!pendingMatch) return;
-    const matches = await fetchCutoffsForType(pendingMatch.university, pendingMatch.department, admissionType);
-    const { university: matchUniversity, department: matchDepartment } = pendingMatch;
-    setTypeOptions(null);
-    setPendingMatch(null);
-    if (matches.length === 0) {
-      showToast("일치하는 입결 데이터를 찾을 수 없습니다. 직접 입력해주세요.", "error");
-      return;
-    }
-    await applyImportedResult(matchUniversity, matchDepartment, matches, admissionType);
+  /**
+   * 세부 전형명을 아직 안 골랐을 때, 대학+모집단위(및 고른 전형 유형)에 있는 이투스 전형을
+   * 전부 훑어서 확인 모달에 띄운다(하나뿐이어도 확인 모달을 거친다).
+   */
+  async function browseOfferings(university: string, department: string) {
+    const candidates = await listOfferingCandidates(university, department, trackForOffering(form.category));
+    presentOfferingOptions(candidates);
   }
 
+  /**
+   * "불러오기"는 오직 이 버튼을 눌렀을 때만 동작한다(대학·학과·세부 전형명을 타이핑하거나
+   * 자동완성에서 고르는 동작만으로는 아무것도 자동으로 채우지 않는다). 세부 전형명까지
+   * 입력되어 있으면 정확 매칭, 아니면 대학+학과로 전형데이터를 훑어서 채운다.
+   */
   async function handleImport() {
     const uni = form.university.trim();
     const dept = form.department.trim();
@@ -256,9 +255,14 @@ export function WonseoCardModal({
     }
     setImporting(true);
     try {
-      await resolveMatch(uni, dept);
+      const sub = form.subCategory.trim();
+      if (sub) {
+        await applyOfferingMatch(uni, dept, sub);
+      } else {
+        await browseOfferings(uni, dept);
+      }
     } catch {
-      showToast("입결 데이터를 불러오지 못했습니다.", "error");
+      showToast("전형 정보를 불러오지 못했습니다.", "error");
     } finally {
       setImporting(false);
     }
@@ -436,17 +440,11 @@ export function WonseoCardModal({
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <label className="block font-bold text-slate-700">학교 · 학과 정보</label>
-        <button
-          type="button"
-          onClick={handleImport}
-          disabled={importing}
-          className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-[11px] font-bold disabled:opacity-60"
-        >
-          {importing ? "검색 중..." : "불러오기"}
-        </button>
-      </div>
+      <label className="block font-bold text-slate-700">학교 · 학과 정보</label>
+      <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+        본 정보는 참고용이며 실제와 다를 수 있습니다. 지원 전 반드시 해당 대학 입학처 공식
+        모집요강을 확인하세요!
+      </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block font-bold text-slate-700 mb-1">
@@ -535,7 +533,7 @@ export function WonseoCardModal({
                       q,
                       form.university,
                       form.department,
-                      trackFromCategory(form.category),
+                      trackForOffering(form.category),
                     )
                 : undefined
             }
@@ -545,6 +543,16 @@ export function WonseoCardModal({
           />
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={handleImport}
+        disabled={importing}
+        className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition disabled:opacity-60"
+      >
+        <Download className="w-3.5 h-3.5" />
+        <span>{importing ? "전형데이터 검색 중..." : "위 정보로 전형데이터 불러오기"}</span>
+      </button>
 
       <div className="space-y-2 border-t border-slate-100 pt-3">
         <div className="flex items-center justify-between">
@@ -671,72 +679,32 @@ export function WonseoCardModal({
       <RecentResultsEditor years={form.recentResults} onChange={(next) => set("recentResults", next)} />
 
       <Modal
-        open={candidates != null}
-        onClose={() => setCandidates(null)}
-        title="비슷한 학과를 선택해 주세요"
+        open={offeringOptions != null}
+        onClose={() => setOfferingOptions(null)}
+        title="불러올 전형 정보를 확인해 주세요"
         maxWidth="max-w-sm"
       >
         <p className="text-[11px] text-slate-400">
-          정확히 일치하는 입결 데이터가 없어요. 아래 중 맞는 학과가 있으면 선택해 주세요.
+          {offeringOptions && offeringOptions.length > 1
+            ? "입력한 대학·모집단위에 전형이 여러 개 있어요. 지원하는 전형을 선택하면 전형방법·수능최저학력기준·모집인원과 최근 입결이 함께 채워져요."
+            : "아래 내용으로 전형방법·수능최저학력기준·모집인원과 최근 입결을 채울게요. 맞으면 선택해 주세요."}
         </p>
         <div className="space-y-1.5 max-h-64 overflow-y-auto">
-          {candidates?.map((c) => (
+          {offeringOptions?.map((opt, i) => (
             <button
-              key={`${c.university}-${c.department}`}
+              key={`${opt.admissionType}-${i}`}
               type="button"
-              onClick={async () => {
-                setCandidates(null);
-                await resolveMatch(c.university, c.department);
-              }}
-              className="w-full text-left px-3 py-2 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl transition"
+              onClick={() => applyOffering(form.university.trim(), form.department.trim(), opt)}
+              className="w-full flex items-center justify-between gap-2 text-left px-3 py-2 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl transition"
             >
-              <span className="font-bold text-slate-800">{c.university}</span>
-              <span className="text-slate-500"> · {c.department}</span>
-            </button>
-          ))}
-        </div>
-      </Modal>
-
-      <Modal
-        open={typeOptions != null}
-        onClose={() => {
-          setTypeOptions(null);
-          setPendingMatch(null);
-        }}
-        title="전형을 선택해 주세요"
-        maxWidth="max-w-sm"
-      >
-        {(() => {
-          const myTrack = trackFromCategory(form.category);
-          const hasMyTrack = typeOptions?.some((o) => o.track === myTrack);
-          if (myTrack && typeOptions && !hasMyTrack) {
-            return (
-              <p className="text-[11px] text-rose-500 font-bold">
-                이 학과는 &ldquo;{form.category}&rdquo;(으)로 등록된 입결이 없어요. 다른 전형 데이터를
-                참고용으로만 보여드려요 — 정확한 값이 아닐 수 있어요.
-              </p>
-            );
-          }
-          return (
-            <p className="text-[11px] text-slate-400">
-              {pendingMatch?.university} · {pendingMatch?.department}에 전형이 여러 개 있어요. 지원하는
-              전형을 선택해 주세요.
-            </p>
-          );
-        })()}
-        <div className="space-y-1.5 max-h-64 overflow-y-auto">
-          {typeOptions?.map((opt) => (
-            <button
-              key={opt.admissionType}
-              type="button"
-              onClick={() => applyType(opt.admissionType)}
-              className="w-full text-left px-3 py-2 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl transition"
-            >
-              <div className="font-bold text-slate-800">{opt.admissionType}</div>
-              <div className="text-slate-400 text-[10px] mt-0.5">
-                {opt.preview.year}학년도 · 모집 {opt.preview.enrollment ?? "-"}명 · 경쟁률{" "}
-                {opt.preview.competition_rate ?? "-"}
+              <div>
+                <div className="font-bold text-slate-800">{opt.admissionType}</div>
+                <div className="text-slate-400 text-[10px] mt-0.5">
+                  {opt.track} · {opt.methodSingle || `${opt.methodStage1} → ${opt.methodStage2}`} · 모집{" "}
+                  {opt.enrollment ?? "-"}명
+                </div>
               </div>
+              <span className="shrink-0 text-[11px] font-bold text-indigo-600">확인</span>
             </button>
           ))}
         </div>

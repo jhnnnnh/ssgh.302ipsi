@@ -39,7 +39,7 @@ export const LEVEL_TABLE_CELL_STYLE: Record<SupportLevel, string> = {
 };
 
 /** 전형 유형 빠른 선택 버튼 (그 외 값은 "직접입력"으로 취급) */
-export const QUICK_CATEGORY_OPTIONS = ["학생부교과", "학생부종합"] as const;
+export const QUICK_CATEGORY_OPTIONS = ["학생부교과", "학생부종합", "논술", "실기"] as const;
 
 export const STATUS_OPTIONS: { value: ApplicationStatus; label: string }[] = [
   { value: "지원예정", label: "지원예정" },

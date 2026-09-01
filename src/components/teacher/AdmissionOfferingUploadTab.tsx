@@ -6,34 +6,25 @@ import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/providers/ToastProvider";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
 import {
-  AdmissionMethodParseError,
-  parseAdmissionMethodExcel,
-  type ParsedAdmissionMethodRow,
-} from "@/lib/admission-method-excel";
-import type { AdmissionMethodCategory } from "@/lib/database.types";
+  AdmissionOfferingParseError,
+  parseAdmissionOfferingExcel,
+  type ParsedOfferingRow,
+} from "@/lib/admission-offering-excel";
 
-const CHUNK_SIZE = 2000;
-const CATEGORIES: { key: AdmissionMethodCategory; label: string }[] = [
-  { key: "학생부교과전형", label: "학생부교과" },
-  { key: "학생부종합전형", label: "학생부종합" },
-  { key: "논술전형", label: "논술" },
-];
+// 93개 컬럼(그중 raw jsonb는 전체 원본을 통째로 담아 특히 무겁다)을 한 번에 올리다 보니
+// 기존 다른 테이블(26~9열)에서 쓰던 2000행 청크는 요청이 커서 타임아웃이 났다. 500행으로
+// 줄이니 안정적으로 끝까지 업로드됐다.
+const CHUNK_SIZE = 500;
 
-function useMethodSummary() {
-  const [counts, setCounts] = useState<Record<AdmissionMethodCategory, number> | null>(null);
+function useOfferingSummary() {
+  const [count, setCount] = useState<number | null>(null);
 
   const reload = async () => {
     const supabase = createClient();
-    const results = await Promise.all(
-      CATEGORIES.map(({ key }) =>
-        supabase.from("admission_methods").select("id", { count: "exact", head: true }).eq("category", key),
-      ),
-    );
-    const next = {} as Record<AdmissionMethodCategory, number>;
-    CATEGORIES.forEach(({ key }, i) => {
-      next[key] = results[i].count ?? 0;
-    });
-    setCounts(next);
+    const { count: total } = await supabase
+      .from("admission_offerings")
+      .select("id", { count: "exact", head: true });
+    setCount(total ?? 0);
   };
 
   useEffect(() => {
@@ -41,46 +32,46 @@ function useMethodSummary() {
     reload();
   }, []);
 
-  return { counts, reload };
+  return { count, reload };
 }
 
 async function uploadRows(
-  rows: ParsedAdmissionMethodRow[],
+  rows: ParsedOfferingRow[],
   onProgress: (done: number, total: number) => void,
 ): Promise<number> {
-  let inserted = 0;
+  const batchUploadedAt = new Date().toISOString();
+  let saved = 0;
   for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
     const chunk = rows.slice(i, i + CHUNK_SIZE);
-    const res = await fetch("/api/admin/upload-admission-methods", {
+    const isLast = i + CHUNK_SIZE >= rows.length;
+    const res = await fetch("/api/admin/upload-admission-offerings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rows: chunk, isFirst: i === 0 }),
+      body: JSON.stringify({ rows: chunk, batchUploadedAt, isLast }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "업로드에 실패했습니다.");
-    inserted += data.count as number;
+    saved += data.count as number;
     onProgress(Math.min(i + CHUNK_SIZE, rows.length), rows.length);
   }
-  return inserted;
+  return saved;
 }
 
-export function AdmissionMethodUploadTab() {
+export function AdmissionOfferingUploadTab() {
   const showToast = useToast();
   const confirm = useConfirm();
-  const { counts, reload } = useMethodSummary();
+  const { count, reload } = useOfferingSummary();
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
-
-  const total = counts ? Object.values(counts).reduce((a, b) => a + b, 0) : null;
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
 
-    if (total && total > 0) {
+    if (count && count > 0) {
       const ok = await confirm({
-        message: `이미 저장된 전형정보 ${total.toLocaleString()}건이 있습니다. 새 파일로 전부 교체하시겠습니까?`,
+        message: `이미 저장된 전형 데이터 ${count.toLocaleString()}건이 있습니다. 새 파일 기준으로 안전하게 교체하시겠습니까?`,
         confirmLabel: "교체하기",
         danger: true,
       });
@@ -90,12 +81,13 @@ export function AdmissionMethodUploadTab() {
     setUploading(true);
     setProgress(null);
     try {
-      const rows = await parseAdmissionMethodExcel(file);
-      const inserted = await uploadRows(rows, (done, t) => setProgress({ done, total: t }));
-      showToast(`${inserted.toLocaleString()}건 저장되었습니다.`, "success");
+      const { rows, duplicateCodeCount } = await parseAdmissionOfferingExcel(file);
+      const saved = await uploadRows(rows, (done, total) => setProgress({ done, total }));
+      const dupNote = duplicateCodeCount > 0 ? ` (식별 CODE 중복 ${duplicateCodeCount}건은 마지막 값으로 대체)` : "";
+      showToast(`${saved.toLocaleString()}건 저장되었습니다.${dupNote}`, "success");
       await reload();
     } catch (err) {
-      if (err instanceof AdmissionMethodParseError) {
+      if (err instanceof AdmissionOfferingParseError) {
         showToast(err.message, "error");
       } else {
         showToast(err instanceof Error ? err.message : "업로드에 실패했습니다.", "error");
@@ -113,28 +105,22 @@ export function AdmissionMethodUploadTab() {
           <ListChecks className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="font-bold text-slate-900">전형정보 업로드</h3>
+          <h3 className="font-bold text-slate-900">수시 전형 업로드</h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            학생부교과전형/학생부종합전형/논술전형 시트를 읽어 저장합니다. 새로 업로드하면 기존
-            데이터는 전부 교체됩니다.
+            &ldquo;수시전형모음&rdquo; 엑셀의 &ldquo;전형데이터&rdquo; 시트를 읽어 저장합니다. 식별
+            CODE 기준으로 안전하게 교체됩니다.
           </p>
         </div>
       </div>
 
       <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs text-slate-600">
-        {counts == null ? (
+        {count == null ? (
           "불러오는 중..."
-        ) : total === 0 ? (
-          "저장된 데이터 없음"
+        ) : count === 0 ? (
+          "아직 저장된 전형 데이터가 없습니다."
         ) : (
           <>
-            현재 저장된 데이터:{" "}
-            {CATEGORIES.map(({ key, label }, i) => (
-              <span key={key}>
-                {i > 0 && ", "}
-                {label} <span className="font-bold text-slate-800">{counts[key].toLocaleString()}건</span>
-              </span>
-            ))}
+            현재 저장된 데이터: <span className="font-bold text-slate-800">{count.toLocaleString()}건</span>
           </>
         )}
       </div>
@@ -169,10 +155,7 @@ export function AdmissionMethodUploadTab() {
 
       <div className="flex items-start gap-1.5 text-[11px] text-slate-400">
         <FileSpreadsheet className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-        <span>
-          학생부교과전형/학생부종합전형/논술전형 3개 시트를 가진 파일만 읽습니다. (사용안내 시트가
-          있으면 무시하고 넘어갑니다.)
-        </span>
+        <span>식별 CODE·대학명·전형유형 등 93개 컬럼을 가진 &ldquo;전형데이터&rdquo; 시트만 읽습니다.</span>
       </div>
     </div>
   );

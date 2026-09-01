@@ -16,7 +16,7 @@ function loadUniversities(): Promise<string[]> {
   if (!universityPromise) {
     universityPromise = (async () => {
       const supabase = createClient();
-      const { data } = await supabase.rpc("autocomplete_universities", { p_query: "", p_limit: 500 });
+      const { data } = await supabase.rpc("autocomplete_offering_universities", { p_query: "", p_limit: 500 });
       const list = (data ?? []).map((r) => r.university);
       universityCache = list;
       return list;
@@ -50,7 +50,7 @@ function loadDepartments(university: string): Promise<DeptRow[]> {
   if (!promise) {
     promise = (async () => {
       const supabase = createClient();
-      const { data } = await supabase.rpc("autocomplete_departments", {
+      const { data } = await supabase.rpc("autocomplete_offering_departments", {
         p_query: "",
         p_university: key || null,
         p_limit: key ? 500 : 5000,
@@ -82,7 +82,7 @@ export async function searchDepartments(query: string, university: string): Prom
     }));
 }
 
-type TypeRow = { admission_type: string; department: string; track: string | null };
+type TypeRow = { admission_type: string; department: string; track: string };
 const typeCache = new Map<string, TypeRow[]>();
 const typePromises = new Map<string, Promise<TypeRow[]>>();
 
@@ -94,7 +94,7 @@ function loadAdmissionTypes(university: string, department: string): Promise<Typ
   if (!promise) {
     promise = (async () => {
       const supabase = createClient();
-      const { data } = await supabase.rpc("autocomplete_admission_types", {
+      const { data } = await supabase.rpc("autocomplete_offering_admission_types", {
         p_query: "",
         p_university: university || null,
         p_department: department || null,
@@ -112,15 +112,16 @@ function loadAdmissionTypes(university: string, department: string): Promise<Typ
 /**
  * 세부 전형명 자동완성. university+department가 다 채워져 있으면 그 조합에 실제로 있는
  * 전형명만, university만 있으면 그 대학 전체 전형명(후보 옆에 학과명 표시)을 보여준다.
- * university 자체가 없으면 호출하지 않는 게 맞다(자유 입력만 허용). 전형 유형에서 교과/종합을
- * 골랐으면 track으로도 걸러서, 학생이 고른 유형과 안 맞는 전형명은 애초에 후보에서 뺀다.
- * 세부 전형은 종류가 몇 개 안 되므로 query가 비어 있어도(빈칸을 누른 시점) 전체 후보를 보여준다.
+ * university 자체가 없으면 호출하지 않는 게 맞다(자유 입력만 허용). 전형 유형에서 교과/종합/
+ * 논술/실기 중 하나를 골랐으면 track으로도 걸러서, 학생이 고른 유형과 안 맞는 전형명은
+ * 애초에 후보에서 뺀다. 세부 전형은 종류가 몇 개 안 되므로 query가 비어 있어도(빈칸을
+ * 누른 시점) 전체 후보를 보여준다.
  */
 export async function searchAdmissionTypes(
   query: string,
   university: string,
   department: string,
-  track?: "교과" | "종합",
+  track?: string,
 ): Promise<AutocompleteOption[]> {
   const q = query.trim();
   const trimmedUni = university.trim();

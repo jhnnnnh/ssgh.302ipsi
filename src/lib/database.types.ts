@@ -163,23 +163,37 @@ export type AdmissionCutoff = {
   created_at: string;
 };
 
-export type AdmissionMethodCategory = "학생부교과전형" | "학생부종합전형" | "논술전형";
-
 /**
- * "전형방법/수능최저학력기준 참고자료" 엑셀의 3개 시트(학생부교과전형/학생부종합전형/논술전형)를
- * 그대로 저장한 전형정보. 매년 전체관리자가 새 파일을 올리면 통째로 교체된다.
+ * 이투스 "OOOO학년도 수시전형모음" 엑셀의 "전형데이터" 시트(93열)를 저장한 전형정보.
+ * 매년 전체관리자가 새 파일을 올리면 식별 CODE 기준으로 안전하게 교체된다. 실제로
+ * 매칭·자동 채움에 쓰는 필드만 타입 있는 컬럼이고, 나머지 원본 열은 raw에 통째로 있다.
  */
-export type AdmissionMethod = {
+export type AdmissionOffering = {
   id: string;
-  category: AdmissionMethodCategory;
-  region: string | null;
-  area: string;
+  offering_code: string;
   university: string;
+  department: string;
   admission_type: string;
-  method: string | null;
-  min_standard: string | null;
-  note: string | null;
-  review_elements: string | null;
+  admission_type_group: string | null;
+  track: string;
+  plan_kind: string | null;
+  field: string | null;
+  field_detail: string | null;
+  enrollment: number | null;
+  selection_model: string;
+  method_text: string | null;
+  method_academic_quant: number | null;
+  method_academic_qual: number | null;
+  method_interview: number | null;
+  method_essay: number | null;
+  method_practical: number | null;
+  method_document: number | null;
+  method_stage1_score: number | null;
+  method_etc: number | null;
+  min_standard_applied: string | null;
+  min_standard_text: string | null;
+  raw: Record<string, unknown>;
+  uploaded_at: string;
   created_at: string;
 };
 
@@ -286,13 +300,19 @@ export type Database = {
           Partial<Omit<AdmissionCutoff, "university" | "year" | "department" | "id">> & { id?: string };
         Update: Partial<AdmissionCutoff>;
       } & NoRelationships;
-      admission_methods: {
-        Row: AdmissionMethod;
-        Insert: Pick<AdmissionMethod, "category" | "area" | "university" | "admission_type"> &
-          Partial<Omit<AdmissionMethod, "category" | "area" | "university" | "admission_type" | "id">> & {
-            id?: string;
-          };
-        Update: Partial<AdmissionMethod>;
+      admission_offerings: {
+        Row: AdmissionOffering;
+        Insert: Pick<
+          AdmissionOffering,
+          "offering_code" | "university" | "department" | "admission_type" | "track" | "selection_model" | "raw" | "uploaded_at"
+        > &
+          Partial<
+            Omit<
+              AdmissionOffering,
+              "offering_code" | "university" | "department" | "admission_type" | "track" | "selection_model" | "raw" | "uploaded_at" | "id"
+            >
+          > & { id?: string };
+        Update: Partial<AdmissionOffering>;
       } & NoRelationships;
     };
     Views: Record<string, never>;
@@ -317,22 +337,23 @@ export type Database = {
         Args: { p_university: string; p_department: string; p_limit?: number };
         Returns: { university: string; department: string; score: number }[];
       };
-      autocomplete_universities: {
+      autocomplete_offering_universities: {
         Args: { p_query: string; p_limit?: number };
         Returns: { university: string }[];
       };
-      autocomplete_departments: {
+      autocomplete_offering_departments: {
         Args: { p_query: string; p_university?: string | null; p_limit?: number };
         Returns: { university: string; department: string }[];
       };
-      autocomplete_admission_types: {
+      autocomplete_offering_admission_types: {
         Args: {
           p_query: string;
           p_university?: string | null;
           p_department?: string | null;
+          p_track?: string | null;
           p_limit?: number;
         };
-        Returns: { admission_type: string; department: string; track: string | null }[];
+        Returns: { admission_type: string; department: string; track: string }[];
       };
     };
   };
