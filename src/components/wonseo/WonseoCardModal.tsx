@@ -393,7 +393,7 @@ export function WonseoCardModal({
             value={form.rank}
             onChange={(e) => set("rank", e.target.value)}
             placeholder="예: 1지망"
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
         <div>
@@ -429,7 +429,7 @@ export function WonseoCardModal({
           <select
             value={form.status}
             onChange={(e) => set("status", e.target.value as ApplicationStatus)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -539,7 +539,7 @@ export function WonseoCardModal({
             }
             revealOnFocus
             placeholder="예: 지역균형전형 / 일반전형"
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
       </div>
@@ -584,7 +584,7 @@ export function WonseoCardModal({
             value={form.stageSingle}
             onChange={(e) => set("stageSingle", e.target.value)}
             placeholder="예: 서류 100% 또는 교과 100%"
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -594,7 +594,7 @@ export function WonseoCardModal({
                 value={form.stage1}
                 onChange={(e) => set("stage1", e.target.value)}
                 placeholder="예: 서류 100% (3배수)"
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
@@ -603,7 +603,7 @@ export function WonseoCardModal({
                 value={form.stage2}
                 onChange={(e) => set("stage2", e.target.value)}
                 placeholder="예: 1단계 70% + 면접 30%"
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
@@ -637,7 +637,7 @@ export function WonseoCardModal({
             value={form.calculatedGrade}
             onChange={(e) => set("calculatedGrade", e.target.value)}
             placeholder="1.00 또는 970점"
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
       </div>

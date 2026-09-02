@@ -407,7 +407,7 @@ export function WonseoManageTab() {
           onClose={() => setModalOpen(false)}
           studentId={selectedStudentId}
           editingCard={editingCard}
-          canEditStatus
+          canEditStatus={isAdmin || statusVisible}
           nextSortOrder={cards.length}
           onSaved={() => reload(selectedStudentId)}
         />
