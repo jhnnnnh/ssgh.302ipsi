@@ -171,7 +171,7 @@ export default function HomePage() {
       </main>
 
       <footer className="mt-12 text-center text-xs text-slate-400 pb-6 border-t border-slate-200/60 pt-6">
-        <p>© 삼성여자고등학교 2026학년도 입시 관리 시스템</p>
+        <p>© 2026. jinhyeokapply All rights reserved.</p>
       </footer>
 
       <Modal
