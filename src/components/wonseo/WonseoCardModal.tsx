@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, GraduationCap, Paperclip } from "lucide-react";
+import { Download, GraduationCap, Paperclip, TriangleAlert } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { AutocompleteInput } from "@/components/ui/AutocompleteInput";
 import { createClient } from "@/lib/supabase/client";
@@ -441,10 +441,6 @@ export function WonseoCardModal({
       )}
 
       <label className="block font-bold text-slate-700">학교 · 학과 정보</label>
-      <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
-        본 정보는 참고용이며 실제와 다를 수 있습니다. 지원 전 반드시 해당 대학 입학처 공식
-        모집요강을 확인하세요!
-      </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block font-bold text-slate-700 mb-1">
@@ -684,6 +680,13 @@ export function WonseoCardModal({
         title="불러올 전형 정보를 확인해 주세요"
         maxWidth="max-w-sm"
       >
+        <p className="flex items-start gap-1.5 text-[11px] text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-1.5">
+          <TriangleAlert className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span>
+            본 정보는 참고용이며 실제와 다를 수 있습니다. 지원 전 반드시 해당 대학 입학처 공식
+            모집요강을 확인하세요!
+          </span>
+        </p>
         <p className="text-[11px] text-slate-400">
           {offeringOptions && offeringOptions.length > 1
             ? "입력한 대학·모집단위에 전형이 여러 개 있어요. 지원하는 전형을 선택하면 전형방법·수능최저학력기준·모집인원과 최근 입결이 함께 채워져요."
