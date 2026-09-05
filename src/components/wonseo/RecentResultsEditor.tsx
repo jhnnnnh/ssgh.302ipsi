@@ -17,8 +17,9 @@ export function RecentResultsEditor({
   }
 
   function addYear() {
-    const guess = years[0]?.year ? String(Number(years[0].year) + 1 || "") : String(new Date().getFullYear());
-    onChange([emptyResultYear(guess), ...years]);
+    const oldestYear = years[years.length - 1]?.year;
+    const guess = oldestYear ? String(Number(oldestYear) - 1 || "") : String(new Date().getFullYear());
+    onChange([...years, emptyResultYear(guess)]);
   }
 
   function removeYear(index: number) {
