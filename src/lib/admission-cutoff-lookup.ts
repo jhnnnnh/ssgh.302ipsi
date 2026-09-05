@@ -112,6 +112,78 @@ export async function fetchRecentResultsBestEffort(
   return fetchCutoffsForType(university, department, best.type);
 }
 
+export type CutoffCandidate = {
+  university: string;
+  department: string;
+  score: number;
+};
+
+/**
+ * 대학명+학과명이 정확히 일치하는 입결이 아예 없을 때(대학이 학과를 개편했거나 표기가
+ * 다른 경우) 이름이 비슷한 (대학, 학과) 후보를 찾는다. DB의 트라이그램 유사도로만
+ * 거르므로, 진짜 같은 학과의 개편인지는 사람이 최종 확인해야 한다.
+ */
+export async function searchCutoffCandidates(
+  university: string,
+  department: string,
+): Promise<CutoffCandidate[]> {
+  const supabase = createClient();
+  const { data } = await supabase.rpc("search_admission_cutoff_candidates", {
+    p_university: university,
+    p_department: department,
+  });
+  return data ?? [];
+}
+
+export type CutoffCandidatePreview = CutoffCandidate & { years: CutoffMatch[] };
+
+/**
+ * 세부 전형명이 "교과"/"종합"처럼 트랙 수식어뿐이라 이름으로는 비교가 안 될 때 쓴다.
+ * 후보 학과의 전형 중 트랙이 같은 것 하나를 미리보기용으로 고른다 — 사용자가 후보
+ * 목록에서 최종 확인하는 흐름에서만 쓰이므로, 이름 없이 트랙만으로 골라도 안전하다
+ * (fetchRecentResultsBestEffort의 조용한 자동 채움 경로는 이 완화된 규칙을 안 쓴다).
+ */
+async function fetchAnyCutoffForTrack(
+  university: string,
+  department: string,
+  preferredTrack: "교과" | "종합" | undefined,
+): Promise<CutoffMatch[]> {
+  const rows = await fetchCutoffRows(university, department);
+  const trackOf = new Map<string, string | null>();
+  for (const row of rows) {
+    if (row.admission_type && !trackOf.has(row.admission_type)) trackOf.set(row.admission_type, row.track);
+  }
+  const preferredMatch = [...trackOf.entries()].find(([, track]) => preferredTrack && track === preferredTrack);
+  const chosen = preferredMatch?.[0] ?? [...trackOf.keys()][0];
+  if (!chosen) return [];
+  return fetchCutoffsForType(university, department, chosen);
+}
+
+/**
+ * 이름이 비슷한 (대학, 학과) 후보들 중에서, 실제로 세부전형명까지 이름이 비슷한 전형이
+ * 있어서 미리보기(최근 3개년)를 만들 수 있는 것만 골라 반환한다(최대 5개) — 후보로
+ * 나왔지만 정작 보여줄 데이터가 없는 항목은 걸러낸다. 여기서 나온 값은 원래 카드의
+ * 학과와 다른 학과 데이터일 수 있으니 항상 "참고용"으로만 취급해야 한다.
+ */
+export async function searchCutoffCandidatesWithPreview(
+  university: string,
+  department: string,
+  preferredTrack: "교과" | "종합" | undefined,
+  hintAdmissionType: string,
+): Promise<CutoffCandidatePreview[]> {
+  const candidates = await searchCutoffCandidates(university, department);
+  const hasHint = normalize(hintAdmissionType).length > 0;
+  const withPreview = await Promise.all(
+    candidates.map(async (c) => ({
+      ...c,
+      years: hasHint
+        ? await fetchRecentResultsBestEffort(c.university, c.department, preferredTrack, hintAdmissionType)
+        : await fetchAnyCutoffForTrack(c.university, c.department, preferredTrack),
+    })),
+  );
+  return withPreview.filter((c) => c.years.length > 0).slice(0, 5);
+}
+
 /**
  * 불러온 입결을 기존 최근 입결 표에 합친다. 같은 연도가 이미 있으면 그 행의
  * 모집인원/경쟁률/충원인원/50%컷/70%컷만 덮어쓰고, "나의 상대적 위치"는 절대 건드리지 않는다.

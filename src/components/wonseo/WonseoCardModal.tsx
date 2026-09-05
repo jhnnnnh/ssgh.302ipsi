@@ -11,7 +11,9 @@ import { RecentResultsEditor } from "@/components/wonseo/RecentResultsEditor";
 import {
   fetchRecentResultsBestEffort,
   mergeCutoffsIntoYears,
+  searchCutoffCandidatesWithPreview,
   trackFromCategory,
+  type CutoffCandidatePreview,
 } from "@/lib/admission-cutoff-lookup";
 import {
   findOfferingMatch,
@@ -143,6 +145,9 @@ export function WonseoCardModal({
   const universityRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
   const [offeringOptions, setOfferingOptions] = useState<MergedOffering[] | null>(null);
+  const [cutoffCandidates, setCutoffCandidates] = useState<CutoffCandidatePreview[] | null>(null);
+  const [findingSimilarCutoffs, setFindingSimilarCutoffs] = useState(false);
+  const [cutoffSourceNote, setCutoffSourceNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -155,6 +160,7 @@ export function WonseoCardModal({
     );
     setNewFiles([]);
     setUniversityError(false);
+    setCutoffSourceNote(null);
     if (editingCard) {
       const supabase = createClient();
       supabase
@@ -266,6 +272,44 @@ export function WonseoCardModal({
     } finally {
       setImporting(false);
     }
+  }
+
+  /**
+   * "최근 입결" 표가 비어 있을 때 쓴다 — 대학명·학과명이 전형데이터와 정확히 일치하는
+   * 입결이 없는 경우(대학의 학과 개편·명칭 변경 등)를 위해, 이름이 비슷한 다른 학과의
+   * 입결을 후보로 찾아 보여준다. 절대 자동으로 채우지 않고 사용자가 직접 골라야 한다 —
+   * 완전히 다른 학과일 수도 있어서다.
+   */
+  async function findSimilarCutoffs() {
+    const uni = form.university.trim();
+    const dept = form.department.trim();
+    if (!uni || !dept) return;
+    setFindingSimilarCutoffs(true);
+    try {
+      const candidates = await searchCutoffCandidatesWithPreview(
+        uni,
+        dept,
+        trackFromCategory(form.category),
+        form.subCategory.trim(),
+      );
+      if (candidates.length === 0) {
+        showToast("비슷한 학과의 입결 데이터를 찾을 수 없습니다.", "error");
+        return;
+      }
+      setCutoffCandidates(candidates);
+    } catch {
+      showToast("입결 데이터를 불러오지 못했습니다.", "error");
+    } finally {
+      setFindingSimilarCutoffs(false);
+    }
+  }
+
+  /** 참고용 후보 하나를 골랐을 때 표에 채운다. 어느 학과에서 왔는지 표 아래에 남겨 둔다. */
+  function applyCutoffCandidate(candidate: CutoffCandidatePreview) {
+    setForm((f) => ({ ...f, recentResults: mergeCutoffsIntoYears(f.recentResults, candidate.years) }));
+    setCutoffSourceNote(`${candidate.university} ${candidate.department}`);
+    setCutoffCandidates(null);
+    showToast(`${candidate.university} ${candidate.department} 입결을 참고용으로 불러옵니다.`, "success");
   }
 
   const isCustomCategory = !(QUICK_CATEGORY_OPTIONS as readonly string[]).includes(form.category);
@@ -672,7 +716,13 @@ export function WonseoCardModal({
         )}
       </div>
 
-      <RecentResultsEditor years={form.recentResults} onChange={(next) => set("recentResults", next)} />
+      <RecentResultsEditor
+        years={form.recentResults}
+        onChange={(next) => set("recentResults", next)}
+        onFindSimilar={findSimilarCutoffs}
+        findingSimilar={findingSimilarCutoffs}
+        sourceNote={cutoffSourceNote}
+      />
 
       <Modal
         open={offeringOptions != null}
@@ -705,6 +755,42 @@ export function WonseoCardModal({
                 <div className="text-slate-400 text-[10px] mt-0.5">
                   {opt.track} · {opt.methodSingle || `${opt.methodStage1} → ${opt.methodStage2}`} · 모집{" "}
                   {opt.enrollment ?? "-"}명
+                </div>
+              </div>
+              <span className="shrink-0 text-[11px] font-bold text-indigo-600">확인</span>
+            </button>
+          ))}
+        </div>
+      </Modal>
+
+      <Modal
+        open={cutoffCandidates != null}
+        onClose={() => setCutoffCandidates(null)}
+        title="비슷한 학과의 입결을 확인해 주세요"
+        maxWidth="max-w-sm"
+      >
+        <p className="flex items-start gap-1.5 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+          <TriangleAlert className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+          <span>
+            {form.university} {form.department}와(과) 이름이 비슷한 다른 학과의 입결이에요. 학과 개편·명칭
+            변경으로 실제 같은 전형일 수도, 전혀 다른 학과일 수도 있으니 참고용으로만 확인하세요.
+          </span>
+        </p>
+        <div className="space-y-1.5 max-h-64 overflow-y-auto">
+          {cutoffCandidates?.map((c) => (
+            <button
+              key={`${c.university}-${c.department}`}
+              type="button"
+              onClick={() => applyCutoffCandidate(c)}
+              className="w-full flex items-center justify-between gap-2 text-left px-3 py-2 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 rounded-xl transition"
+            >
+              <div>
+                <div className="font-bold text-slate-800">
+                  {c.university} · {c.department}
+                </div>
+                <div className="text-slate-400 text-[10px] mt-0.5">
+                  {c.years[0]?.year}학년도 · 모집 {c.years[0]?.enrollment ?? "-"}명 · 경쟁률{" "}
+                  {c.years[0]?.competition_rate ?? "-"}
                 </div>
               </div>
               <span className="shrink-0 text-[11px] font-bold text-indigo-600">확인</span>

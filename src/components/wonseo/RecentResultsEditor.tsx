@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import { RESULT_ROWS, emptyResultYear } from "@/components/wonseo/RecentResultsTable";
 import type { RecentResultYear } from "@/lib/database.types";
 
@@ -8,9 +8,17 @@ import type { RecentResultYear } from "@/lib/database.types";
 export function RecentResultsEditor({
   years,
   onChange,
+  onFindSimilar,
+  findingSimilar,
+  sourceNote,
 }: {
   years: RecentResultYear[];
   onChange: (next: RecentResultYear[]) => void;
+  /** 표가 비어 있을 때 "비슷한 학과 입결 찾기"를 누르면 호출된다(없으면 버튼 자체를 안 보여준다). */
+  onFindSimilar?: () => void;
+  findingSimilar?: boolean;
+  /** 다른 학과 데이터를 참고용으로 불러왔을 때, 어디서 왔는지 표 아래에 남기는 안내(이번 편집 세션 동안만 유지됨). */
+  sourceNote?: string | null;
 }) {
   function updateCell(index: number, key: keyof RecentResultYear, value: string) {
     onChange(years.map((y, i) => (i === index ? { ...y, [key]: value } : y)));
@@ -25,6 +33,22 @@ export function RecentResultsEditor({
   function removeYear(index: number) {
     onChange(years.filter((_, i) => i !== index));
   }
+
+  // 새 카드는 항상 연도 칸 3개가 기본으로 깔려 있어서(값은 비어 있음), "표에 실제 데이터가
+  // 있는지"는 칸 개수가 아니라 셀 값으로 판단해야 "비슷한 학과 입결 찾기"가 뜬다.
+  const hasData = years.some((y) => y.enrollment || y.competitionRate || y.fillCount || y.cut50 || y.cut70);
+
+  const findSimilarButton = onFindSimilar && (
+    <button
+      type="button"
+      onClick={onFindSimilar}
+      disabled={findingSimilar}
+      className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-bold transition disabled:opacity-60"
+    >
+      <Search className="w-3 h-3" />
+      {findingSimilar ? "찾는 중..." : "비슷한 학과 입결 찾기"}
+    </button>
+  );
 
   return (
     <div className="space-y-2 border-t border-slate-100 pt-3">
@@ -41,11 +65,13 @@ export function RecentResultsEditor({
       </div>
 
       {years.length === 0 ? (
-        <p className="text-[11px] text-slate-400 text-center py-3 bg-slate-50 rounded-xl">
-          등록된 입결 정보가 없습니다. 연도를 추가해 주세요.
-        </p>
+        <div className="text-center py-3 bg-slate-50 rounded-xl space-y-2">
+          <p className="text-[11px] text-slate-400">등록된 입결 정보가 없습니다. 연도를 추가해 주세요.</p>
+          {findSimilarButton}
+        </div>
       ) : (
         <div className="overflow-x-auto">
+          {!hasData && findSimilarButton && <div className="mb-1.5">{findSimilarButton}</div>}
           <table className="text-[11px] border-collapse w-full">
             <thead>
               <tr>
@@ -91,6 +117,11 @@ export function RecentResultsEditor({
             </tbody>
           </table>
         </div>
+      )}
+      {sourceNote && (
+        <p className="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1">
+          참고용: {sourceNote}
+        </p>
       )}
     </div>
   );
