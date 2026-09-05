@@ -21,8 +21,7 @@ const MAX_BADGES_PER_DAY = 2;
 
 export function CalendarGrid({
   events,
-  onImport,
-  importing,
+  onOpenSchedule,
   onAddEvent,
   onEditEvent,
   onDeleteEvent,
@@ -30,8 +29,7 @@ export function CalendarGrid({
   showStudentName,
 }: {
   events: ResolvedCalendarEvent[];
-  onImport: () => void;
-  importing: boolean;
+  onOpenSchedule: () => void;
   onAddEvent: (defaultDate?: string) => void;
   onEditEvent: (event: ResolvedCalendarEvent) => void;
   onDeleteEvent: (event: ResolvedCalendarEvent) => void;
@@ -103,12 +101,11 @@ export function CalendarGrid({
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={onImport}
-            disabled={importing}
-            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-60"
+            onClick={onOpenSchedule}
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>{importing ? "불러오는 중..." : "원서 일정 불러오기"}</span>
+            <span>내 원서 일정</span>
           </button>
           <button
             onClick={() => onAddEvent(selectedDate)}

@@ -197,17 +197,21 @@ export type AdmissionOffering = {
   created_at: string;
 };
 
-export type CalendarEventType = "wonseo_linked" | "personal" | "class" | "grade";
+export type CalendarEventType = "wonseo_linked" | "wonseo_schedule" | "personal" | "class" | "grade";
 
 /**
  * 입시 일정 캘린더 이벤트. wonseo_linked 유형은 title/date를 저장하지 않고
  * 항상 연결된 wonseo_cards를 조회해 화면에서 채워 넣는다(원서 카드가 곧 원본).
+ * wonseo_schedule은 이투스 전형데이터에서 뽑아낸 일정(논술/면접/원서접수 등)을 그
+ * 자리에서 title/date/kind로 스냅샷 저장한다 — 카드 하나에 여러 건이 있을 수 있다.
  */
 export type CalendarEvent = {
   id: string;
   type: CalendarEventType;
   title: string | null;
   date: string | null;
+  /** wonseo_schedule 전용: 논술/면접/실기/원서접수/서류제출/합격발표 등 일정 종류. */
+  kind: string | null;
   color: string;
   student_id: string | null;
   grade: number | null;

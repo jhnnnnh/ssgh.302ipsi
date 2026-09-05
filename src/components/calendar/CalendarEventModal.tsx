@@ -50,7 +50,7 @@ export function CalendarEventModal({
   onSaved: () => void;
 }) {
   const showToast = useToast();
-  const isWonseoLinked = editingEvent?.type === "wonseo_linked";
+  const isWonseoLinked = editingEvent?.type === "wonseo_linked" || editingEvent?.type === "wonseo_schedule";
 
   const [type, setType] = useState<CalendarEventType>(allowedTypes[0] ?? "personal");
   const [title, setTitle] = useState("");

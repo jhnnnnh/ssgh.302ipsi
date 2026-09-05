@@ -6,33 +6,19 @@ import { useToast } from "@/components/providers/ToastProvider";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
 import { createClient } from "@/lib/supabase/client";
 import { useCalendarEvents, type ResolvedCalendarEvent } from "@/lib/hooks/useCalendarEvents";
-import { importWonseoCalendarEvents } from "@/lib/calendar-import";
 import { CalendarGrid } from "@/components/calendar/CalendarGrid";
 import { CalendarEventModal } from "@/components/calendar/CalendarEventModal";
+import { WonseoScheduleModal } from "@/components/calendar/WonseoScheduleModal";
 
 export function StudentCalendarTab({ studentId }: { studentId: string }) {
   const { profile } = useAuth();
   const showToast = useToast();
   const confirm = useConfirm();
   const { events, reload } = useCalendarEvents();
-  const [importing, setImporting] = useState(false);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ResolvedCalendarEvent | null>(null);
   const [defaultDate, setDefaultDate] = useState<string | undefined>();
-
-  async function handleImport() {
-    if (!profile) return;
-    setImporting(true);
-    try {
-      const count = await importWonseoCalendarEvents({ studentId, createdBy: profile.id });
-      showToast(count > 0 ? `${count}건을 새로 불러왔어요.` : "새로 불러올 일정이 없어요.", "success");
-      reload();
-    } catch {
-      showToast("불러오기에 실패했습니다.", "error");
-    } finally {
-      setImporting(false);
-    }
-  }
 
   function handleAdd(date?: string) {
     setEditingEvent(null);
@@ -63,7 +49,7 @@ export function StudentCalendarTab({ studentId }: { studentId: string }) {
   }
 
   function canManage(event: ResolvedCalendarEvent) {
-    return event.type === "wonseo_linked" || event.type === "personal";
+    return event.type === "wonseo_linked" || event.type === "wonseo_schedule" || event.type === "personal";
   }
 
   if (!profile) return null;
@@ -72,8 +58,7 @@ export function StudentCalendarTab({ studentId }: { studentId: string }) {
     <div className="space-y-6">
       <CalendarGrid
         events={events}
-        onImport={handleImport}
-        importing={importing}
+        onOpenSchedule={() => setScheduleModalOpen(true)}
         onAddEvent={handleAdd}
         onEditEvent={handleEdit}
         onDeleteEvent={handleDelete}
@@ -89,6 +74,13 @@ export function StudentCalendarTab({ studentId }: { studentId: string }) {
         scope={{ studentId }}
         createdBy={profile.id}
         onSaved={reload}
+      />
+      <WonseoScheduleModal
+        open={scheduleModalOpen}
+        onClose={() => setScheduleModalOpen(false)}
+        scope={{ studentId }}
+        createdBy={profile.id}
+        onImported={reload}
       />
     </div>
   );

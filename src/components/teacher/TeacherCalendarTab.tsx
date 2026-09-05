@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useActiveClass } from "@/components/providers/ActiveClassProvider";
-import { useToast } from "@/components/providers/ToastProvider";
 import { useConfirm } from "@/components/providers/ConfirmProvider";
+import { useToast } from "@/components/providers/ToastProvider";
 import { createClient } from "@/lib/supabase/client";
 import { useCalendarEvents, type ResolvedCalendarEvent } from "@/lib/hooks/useCalendarEvents";
-import { importWonseoCalendarEvents } from "@/lib/calendar-import";
 import { CalendarGrid } from "@/components/calendar/CalendarGrid";
 import { Card } from "@/components/ui/Card";
 import { CalendarEventModal } from "@/components/calendar/CalendarEventModal";
+import { WonseoScheduleModal } from "@/components/calendar/WonseoScheduleModal";
 import type { CalendarEventType } from "@/lib/database.types";
 
 export function TeacherCalendarTab() {
@@ -19,7 +19,7 @@ export function TeacherCalendarTab() {
   const showToast = useToast();
   const confirm = useConfirm();
   const { events, reload } = useCalendarEvents();
-  const [importing, setImporting] = useState(false);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<ResolvedCalendarEvent | null>(null);
   const [defaultDate, setDefaultDate] = useState<string | undefined>();
@@ -27,23 +27,6 @@ export function TeacherCalendarTab() {
   const allowedTypes: CalendarEventType[] = isAdmin
     ? ["personal", "class", "grade"]
     : ["personal", "class"];
-
-  async function handleImport() {
-    if (!profile || grade == null || classNo == null) return;
-    setImporting(true);
-    try {
-      const count = await importWonseoCalendarEvents({
-        classScope: { grade, classNo },
-        createdBy: profile.id,
-      });
-      showToast(count > 0 ? `${count}건을 새로 불러왔어요.` : "새로 불러올 일정이 없어요.", "success");
-      reload();
-    } catch {
-      showToast("불러오기에 실패했습니다.", "error");
-    } finally {
-      setImporting(false);
-    }
-  }
 
   function handleAdd(date?: string) {
     setEditingEvent(null);
@@ -74,7 +57,13 @@ export function TeacherCalendarTab() {
   }
 
   function canManage(event: ResolvedCalendarEvent) {
-    if (event.type === "wonseo_linked" || event.type === "class" || event.type === "personal") return true;
+    if (
+      event.type === "wonseo_linked" ||
+      event.type === "wonseo_schedule" ||
+      event.type === "class" ||
+      event.type === "personal"
+    )
+      return true;
     if (event.type === "grade") return isAdmin;
     return false;
   }
@@ -91,8 +80,7 @@ export function TeacherCalendarTab() {
     <div className="space-y-6">
       <CalendarGrid
         events={events}
-        onImport={handleImport}
-        importing={importing}
+        onOpenSchedule={() => setScheduleModalOpen(true)}
         onAddEvent={handleAdd}
         onEditEvent={handleEdit}
         onDeleteEvent={handleDelete}
@@ -109,6 +97,14 @@ export function TeacherCalendarTab() {
         scope={{ grade, classNo }}
         createdBy={profile.id}
         onSaved={reload}
+      />
+      <WonseoScheduleModal
+        open={scheduleModalOpen}
+        onClose={() => setScheduleModalOpen(false)}
+        scope={{ classScope: { grade, classNo } }}
+        createdBy={profile.id}
+        showStudentName
+        onImported={reload}
       />
     </div>
   );
